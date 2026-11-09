@@ -1,0 +1,247 @@
+---
+name: Executive QA & Academic Governance
+colors:
+  surface: '#f8f9ff'
+  surface-dim: '#cbdbf5'
+  surface-bright: '#f8f9ff'
+  surface-container-lowest: '#ffffff'
+  surface-container-low: '#eff4ff'
+  surface-container: '#e5eeff'
+  surface-container-high: '#dce9ff'
+  surface-container-highest: '#d3e4fe'
+  on-surface: '#0b1c30'
+  on-surface-variant: '#434655'
+  inverse-surface: '#213145'
+  inverse-on-surface: '#eaf1ff'
+  outline: '#747686'
+  outline-variant: '#c4c5d7'
+  surface-tint: '#2151da'
+  primary: '#0037b0'
+  on-primary: '#ffffff'
+  primary-container: '#1d4ed8'
+  on-primary-container: '#cad3ff'
+  inverse-primary: '#b7c4ff'
+  secondary: '#565e74'
+  on-secondary: '#ffffff'
+  secondary-container: '#dae2fd'
+  on-secondary-container: '#5c647a'
+  tertiary: '#004f35'
+  on-tertiary: '#ffffff'
+  tertiary-container: '#006948'
+  on-tertiary-container: '#76eab6'
+  error: '#ba1a1a'
+  on-error: '#ffffff'
+  error-container: '#ffdad6'
+  on-error-container: '#93000a'
+  primary-fixed: '#dce1ff'
+  primary-fixed-dim: '#b7c4ff'
+  on-primary-fixed: '#001551'
+  on-primary-fixed-variant: '#0039b5'
+  secondary-fixed: '#dae2fd'
+  secondary-fixed-dim: '#bec6e0'
+  on-secondary-fixed: '#131b2e'
+  on-secondary-fixed-variant: '#3f465c'
+  tertiary-fixed: '#85f8c4'
+  tertiary-fixed-dim: '#68dba9'
+  on-tertiary-fixed: '#002114'
+  on-tertiary-fixed-variant: '#005137'
+  background: '#f8f9ff'
+  on-background: '#0b1c30'
+  surface-variant: '#d3e4fe'
+typography:
+  display-lg:
+    fontFamily: Inter
+    fontSize: 32px
+    fontWeight: '700'
+    lineHeight: 40px
+    letterSpacing: -0.025em
+  display-lg-mobile:
+    fontFamily: Inter
+    fontSize: 24px
+    fontWeight: '700'
+    lineHeight: 32px
+    letterSpacing: -0.02em
+  headline-xl:
+    fontFamily: Inter
+    fontSize: 24px
+    fontWeight: '600'
+    lineHeight: 32px
+    letterSpacing: -0.02em
+  headline-lg:
+    fontFamily: Inter
+    fontSize: 20px
+    fontWeight: '600'
+    lineHeight: 28px
+    letterSpacing: -0.015em
+  headline-md:
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: '600'
+    lineHeight: 24px
+    letterSpacing: -0.01em
+  body-lg:
+    fontFamily: Inter
+    fontSize: 15px
+    fontWeight: '400'
+    lineHeight: 22px
+    letterSpacing: -0.005em
+  body-md:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: '400'
+    lineHeight: 20px
+  body-sm:
+    fontFamily: Inter
+    fontSize: 13px
+    fontWeight: '400'
+    lineHeight: 18px
+  label-lg:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: '500'
+    lineHeight: 20px
+  label-md:
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: '500'
+    lineHeight: 16px
+    letterSpacing: 0.01em
+  label-sm:
+    fontFamily: Inter
+    fontSize: 11px
+    fontWeight: '600'
+    lineHeight: 14px
+    letterSpacing: 0.025em
+  data-mono:
+    fontFamily: Inter
+    fontSize: 13px
+    fontWeight: '500'
+    lineHeight: 18px
+    letterSpacing: -0.01em
+rounded:
+  sm: 0.125rem
+  DEFAULT: 0.25rem
+  md: 0.375rem
+  lg: 0.5rem
+  xl: 0.75rem
+  full: 9999px
+spacing:
+  gutter: 1rem
+  gutter-tablet: 0.75rem
+  gutter-desktop: 1.5rem
+  margin: 1rem
+  margin-tablet: 1.5rem
+  margin-desktop: 2rem
+  space-xs: 0.25rem
+  space-sm: 0.5rem
+  space-md: 0.75rem
+  space-lg: 1rem
+  space-xl: 1.5rem
+  space-2xl: 2rem
+---
+
+## Brand & Style
+
+The design system establishes an institutional, high-precision aesthetic tailored for rigorous quality assurance, academic governance, and institutional incident auditing. The interface balances executive seriousness with analytical clarity, communicating neutrality, meticulous organization, and authoritative oversight.
+
+The visual direction combines **Corporate Modern** with **Technical Precision**:
+- High-density data presentation without visual clutter.
+- Low-contrast structural discipline relying on precise 1px architectural lines rather than excessive shadows.
+- Calibrated, restrained status signaling to prevent sensory overload during long audit cycles.
+- An environment designed for institutional stakeholders, compliance officers, and academic directors requiring immediate operational diagnosis and audit resolution.
+
+## Colors
+
+The palette is engineered around an architectural slate framework punctuated by purposeful, restrained semantic accents.
+
+### Core Surfaces & Grayscale
+- **Canvas Base:** `#f8fafc` (Slate 50) provides an anti-glare, pristine base that minimizes eye fatigue during extended auditing sessions.
+- **Surface Level 1 (Panels & Cards):** `#ffffff` (Pure White) creates crisp spatial separation from the canvas.
+- **Surface Level 2 (Sub-panels, Table Headers, Filter Bars):** `#f1f5f9` (Slate 100).
+- **Structural Outlines & Dividers:** `#e2e8f0` (Slate 200) for standard layout grids; `#cbd5e1` (Slate 300) for interactive control borders.
+- **Secondary Text & Meta Information:** `#64748b` (Slate 500) and `#475569` (Slate 600).
+- **Body & Header Typography:** `#1e293b` (Slate 800) for primary copy; `#0f172a` (Slate 900) for primary headings and strong structural accents.
+
+### Semantic & Status Tokens
+Status indicators use muted, desaturated tones to maintain an executive atmosphere:
+- **Primary / Brand Action:** `#1d4ed8` (Corporate Navy Blue). Deep, institutional, and legible against white backgrounds.
+- **Resolved / Compliant (Tertiary):** `#059669` (Muted Emerald) paired with a `#ecfdf5` background tint and `#a7f3d0` border.
+- **In Progress / Under Review:** `#d97706` (Restrained Amber) paired with a `#fffbeb` background tint and `#fde68a` border.
+- **Critical Incidents / Non-Compliant:** `#dc2626` (Muted Burgundy/Red) paired with a `#fef2f2` background tint and `#fecaca` border.
+- **Informational / Unassigned:** `#3b82f6` (Cadet Slate Blue) paired with a `#eff6ff` background tint and `#bfdbfe` border.
+
+## Typography
+
+The type system relies on **Inter**, optimized for density and readability across dashboards and tabular views.
+
+### Typographic Principles
+- **Tabular Numerals (`tnum`):** All data cells, incident reference counters, percentages, and metrics must enforce `font-feature-settings: "tnum" 1, "cv05" 1, "cv08" 1`. This aligns numeric columns vertically without width jitter.
+- **Hierarchy by Contrast:** Visual rank is generated by shifting from bold slate titles (`#0f172a`) down to medium muted labels (`#64748b`) rather than relying on oversized point sizes.
+- **Micro-Labels:** Badges, operational tags, and metric headers leverage `label-sm` with slight positive tracking (`+0.025em`) for legibility at small sizes.
+
+## Layout & Spacing
+
+The layout utilizes a structured **12-column fluid grid system** with rigid gutters and contained max-widths for ultra-wide displays to maintain scannability.
+
+### Breakpoints & Adaptability
+- **Desktop (>= 1280px):** 12 columns, 24px (`space-xl`) margins, 24px gutters. Density is maintained at maximum capacity, allowing filter sidebars, tabular grids, and metrics KPI rows to co-exist cleanly.
+- **Tablet (768px - 1279px):** 8 columns, 24px margins, 16px gutters. Filter panels collapse into horizontal drop-drawers or contextual sheet overlays.
+- **Mobile (< 768px):** 4 columns, 16px margins, 12px gutters. High-density tables reflow into stacked audit-card summaries showing key status, incident IDs, and urgency.
+
+### Spatial Discipline
+The spacing tokens conform to a strict 4px/8px rhythm. Compact interfaces benefit from tight operational padding (`space-xs` and `space-sm`) inside cell nodes and filter chips, reserving `space-lg` and `space-xl` for sectional structural boundaries.
+
+## Elevation & Depth
+
+This design system minimizes dramatic elevation in favor of **structural boundaries and planar tinting**.
+
+### Low-Contrast Structural Framing
+- Depth is primarily conveyed through planar contrast (`#f8fafc` canvas vs `#ffffff` cards) framed by crisp 1px borders (`#e2e8f0`).
+- **Surface Elevation 0 (Base):** Flush surfaces with flat hairline dividers. Used for table rows, inline forms, and metric widgets.
+- **Surface Elevation 1 (Interactive / Raised):** `0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03)`. Applied to active card containers and hoverable rows.
+- **Surface Elevation 2 (Dropdowns, Popovers & Context Menus):** `0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05)`, bounded by a sharp `#cbd5e1` hairline border.
+- **Surface Elevation 3 (Audit Modals & Dialogs):** `0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.05)` accompanied by a 40% opacity slate scrim (`#0f172a` at 0.4).
+
+## Shapes
+
+The design system employs a **Soft (Level 1)** geometric standard. Containers, input fields, and action buttons use clean `0.25rem` (4px) radii, delivering an engineering-grade, structured feel that reinforces reliability and order.
+
+### Shape Hierarchy
+- **Base Components (Inputs, Buttons, Cards, Panels):** `4px` (`0.25rem`). Maintains sharp lines without becoming aggressively harsh.
+- **Surfaces & Overlays (Modals, Slide-over panels):** `8px` (`0.5rem`).
+- **Pill Exception (Status Badges & Count Pills):** Explicitly rounded at `9999px` to create visual contrast against rectangular data grids and form containers.
+
+## Components
+
+### Buttons & Interactive Controls
+- **Primary Action:** Solid Navy (`#1d4ed8`) text `#ffffff`, 4px radius, `font-weight: 500`. Hover state darkens smoothly to `#1e40af` with an active inset touch `transform: scale(0.99)`.
+- **Secondary / Outline:** Background `#ffffff`, border 1px solid `#cbd5e1`, text `#1e293b`. Hover: background `#f8fafc`, border `#94a3b8`.
+- **Subtle / Ghost:** Borderless, text `#475569`. Hover: background `#f1f5f9`, text `#0f172a`.
+- **Sizes:** Standard button height is compact at `36px` (vertical padding `6px`, horizontal padding `12px`); dense table utility buttons operate at `30px`.
+
+### Badges & Status Indicators
+Badges utilize a full-pill shape (`border-radius: 9999px`) with subdued pastel backgrounds, matching hairline borders, and dark legible typography:
+- **Resuelto / Validado:** `#ecfdf5` background, `#059669` text, `#a7f3d0` border.
+- **En Revisión / Pendiente:** `#fffbeb` background, `#b45309` text, `#fde68a` border.
+- **Crítico / Alerta:** `#fef2f2` background, `#b91c1c` text, `#fecaca` border.
+- **Asignado / Informativo:** `#eff6ff` background, `#1d4ed8` text, `#bfdbfe` border.
+- **Micro-Indicators:** 6px solid dots preceding the label denote real-time sync states.
+
+### Data Tables (High Density)
+- **Header:** `#f8fafc` background, text `#475569`, 11px uppercase `label-sm`, bottom border 1px solid `#cbd5e1`. Padding `8px 12px`.
+- **Rows:** Height `40px` for standard density, `32px` for compact mode. Background `#ffffff`, separated by 1px solid `#f1f5f9`.
+- **Row Interaction:** Hover: `#f8fafc`; Selected: `#eff6ff` with a left border accent of 2px solid `#1d4ed8`.
+- **Monospace Cells:** Ticket/Incidence IDs (e.g., `QA2-2024-8841`) must use `data-mono` styling with color `#334155`.
+
+### Input Fields & Selectors
+- **Input Containers:** 36px height, white background, 1px border `#cbd5e1`, text `#0f172a`. Placeholder `#94a3b8`.
+- **Focus State:** 1px border `#1d4ed8`, box-shadow `0 0 0 2px rgba(29, 78, 216, 0.15)`. No default browser outlines.
+- **Validation:** 1px border `#dc2626`, accompanying helper text in 12px `#dc2626`.
+
+### Checkboxes & Radios
+- Size `16px x 16px`, border 1px solid `#cbd5e1`, radius 3px for checkboxes, full circle for radios.
+- Checked: background `#1d4ed8`, border `#1d4ed8`, displaying a white check icon.
+
+### Cards & Audit Summary Containers
+- White `#ffffff` background, 1px perimeter border `#e2e8f0`, radius 4px.
+- Metric cards incorporate a thin `#f1f5f9` top status bar or a color-coded left border accent (3px) corresponding to the aggregated KPI state.

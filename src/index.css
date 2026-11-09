@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+  }
+
+  body {
+    font-family: var(--font-inter);
+    background-color: #f8fafc;
+    color: #1e293b;
+    font-feature-settings: "tnum" 1, "cv05" 1, "cv08" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Strict tabular numbers for metrics, IDs, dates, counters */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "cv05" 1, "cv08" 1;
+  }
+
+  .font-data-mono {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.01em;
+  }
+
+  /* Custom subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+/* Custom interactive button feel matching spec: transform: scale(0.99) on active */
+.btn-executive-active:active {
+  transform: scale(0.99);
+}

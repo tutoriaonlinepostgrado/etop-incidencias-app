@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Incidencias ETOP · Consolidado QA2</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#243247;--surface3:#2a3a50;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
+  --yellow:#facc15;--text:#e2e8f0;--text-muted:#94a3b8;--text-dim:#64748b;
+  --muted:var(--text-muted);--dim:var(--text-dim);
+  --blue:#60a5fa;--green:#4ade80;--amber:#fbbf24;--red:#f87171;
+  --purple:#a78bfa;--orange:#fb923c;--font:'Inter',system-ui,sans-serif;
+  --mono:'Consolas','SF Mono',monospace;--radius:10px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}
+a{color:inherit}
+.topnav{position:sticky;top:0;z-index:300;display:grid;grid-template-columns:240px minmax(360px,1fr) 230px;align-items:center;height:58px;background:rgba(15,23,42,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border2)}
+.nav-brand{height:100%;display:flex;align-items:center;gap:10px;padding:0 18px;border-right:1px solid var(--border);white-space:nowrap}
+.nav-dot{width:10px;height:10px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 5px rgba(250,204,21,.08)}
+.nav-title{font-size:14px;font-weight:800;white-space:nowrap}
+.nav-links{display:flex;height:100%;align-items:center;padding-left:10px;gap:2px}
+.nav-link{height:100%;display:inline-flex;align-items:center;padding:0 16px;border:0;border-bottom:3px solid transparent;background:none;color:var(--muted);cursor:pointer;font-weight:600;text-decoration:none;white-space:nowrap}
+.nav-link:hover,.nav-link.active{color:var(--text);border-bottom-color:var(--yellow)}
+.nav-stat{padding:0 18px;font-size:10px;color:var(--muted);text-align:right;white-space:nowrap}.nav-stat span{color:var(--yellow);font-weight:800}
+.shell{display:grid;grid-template-columns:225px minmax(0,1fr);min-height:calc(100vh - 60px)}
+.sidebar{position:sticky;top:60px;align-self:start;height:calc(100vh - 60px);padding:18px 14px;background:rgba(15,23,42,.94);border-right:1px solid var(--border);overflow:auto}
+.sidebar-title{color:#D7DEE8;font-size:12px;font-weight:800;letter-spacing:.05em;margin-bottom:16px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}
+.control{width:100%;height:38px;background:var(--surface3);border:1px solid var(--border2);border-radius:7px;color:var(--text);padding:0 10px;outline:none}
+.control:focus{border-color:rgba(250,204,21,.5);box-shadow:0 0 0 3px rgba(250,204,21,.07)}
+.control option{background:var(--surface3)}
+.check{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px;margin:10px 0}
+.check input{accent-color:var(--yellow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border2);border-radius:7px;padding:8px 11px;background:rgba(255,255,255,.035);color:var(--muted);cursor:pointer;text-decoration:none;font-size:11px;font-weight:800}
+.btn:hover{background:rgba(255,255,255,.07);color:var(--text)}
+.btn-primary{background:rgba(96,165,250,.14);border-color:rgba(96,165,250,.35);color:#C7D8EE}
+.btn-yellow{background:rgba(250,204,21,.12);border-color:rgba(250,204,21,.35);color:#F9E27D}
+.btn-purple{background:rgba(192,132,252,.16);border-color:rgba(192,132,252,.35);color:#D8D0F5}
+.btn-danger{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.3);color:#F3C0C0}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.38;pointer-events:none}
+.full{width:100%}
+.content{min-width:0;padding:14px 18px 32px;background:transparent}
+.stats-grid{display:grid;grid-template-columns:repeat(7,minmax(105px,1fr));gap:8px;margin-bottom:8px}
+.stat{min-height:62px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 11px;position:relative;overflow:hidden;cursor:pointer;transition:.15s}
+.stat:hover{transform:translateY(-1px);border-color:rgba(250,204,21,.25)}
+.stat.active{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(250,204,21,.08)}
+.stat::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:var(--accent,var(--yellow))}
+.stat-num{font-size:21px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;color:#D7DEE8}
+.stat-label{font-size:9px;line-height:1.2;color:var(--muted);font-weight:700;margin-top:5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.results-meta{color:var(--muted);font-size:11px}.results-meta strong{color:var(--yellow)}
+.toolbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.page-size{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10px}
+.page-size select{height:34px}
+.acc-list{display:flex;flex-direction:column;gap:8px}
+.acc{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--acc,#64748b);border-radius:var(--radius);overflow:hidden}
+.acc-head{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 15px;cursor:pointer;transition:background .15s}
+.acc-head:hover{background:rgba(255,255,255,.025)}
+.acc-left{min-width:0;flex:1}
+.acc-title-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.acc-nrc{font-family:var(--mono);font-size:12px;font-weight:800;color:#E7EBF1}
+.acc-course{font-size:11px;color:var(--muted);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:5px;font-size:9px;font-weight:800;border:1px solid transparent;white-space:nowrap}
+.chip-date{background:rgba(96,165,250,.1);color:#C7D8EE;border-color:rgba(96,165,250,.22)}
+.chip-state{background:rgba(100,116,139,.12);color:#D0D8E3;border-color:rgba(100,116,139,.25)}
+.chip-green{background:rgba(74,222,128,.12);color:#9AD9B8;border-color:rgba(74,222,128,.25)}
+.chip-red{background:rgba(248,113,113,.13);color:#E8AEAE;border-color:rgba(248,113,113,.28)}
+.chip-amber{background:rgba(251,191,36,.12);color:#F9E27D;border-color:rgba(251,191,36,.25)}
+.chip-purple{background:rgba(192,132,252,.12);color:#D8D0F5;border-color:rgba(192,132,252,.24)}
+.chev{font-size:16px;color:var(--dim);transition:transform .2s}.acc.open .chev{transform:rotate(180deg);color:var(--yellow)}
+.acc-body{display:none;border-top:1px solid var(--border);background:var(--surface2)}.acc.open .acc-body{display:block}
+.course-actions{display:flex;gap:7px;flex-wrap:wrap;padding:10px 13px;border-bottom:1px solid var(--border)}
+.table-wrap{overflow:auto}
+.inc-table{width:100%;border-collapse:collapse;min-width:1140px}
+.inc-table th{position:sticky;top:0;background:var(--surface3);padding:8px 10px;text-align:left;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border2)}
+.inc-table td{padding:8px 10px;font-size:10px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top}
+.inc-table tr:hover td{background:rgba(255,255,255,.015)}
+.idcell{font-family:var(--mono);font-weight:700;color:#BFD2EB!important;white-space:nowrap}
+.text-cell{max-width:330px;min-width:230px;white-space:pre-wrap;overflow-wrap:anywhere}
+.sol-cell{color:#9AD9B8!important}.center{text-align:center}.link-ico{font-size:15px;text-decoration:none;cursor:pointer;background:none;border:0}
+.empty-panel{padding:16px;color:var(--muted);font-size:11px}.empty-green{color:#9AD9B8}.empty-gray{color:var(--dim)}
+.pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:16px}
+.page-btn{min-width:34px;height:32px;border-radius:6px;border:1px solid var(--border2);background:var(--surface);color:var(--muted);cursor:pointer}
+.page-btn:hover:not(:disabled),.page-btn.active{background:rgba(250,204,21,.13);border-color:rgba(250,204,21,.4);color:#F9E27D}
+.page-btn:disabled{opacity:.35;cursor:not-allowed}.page-info{font-size:10px;color:var(--dim)}
+.loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:55px 20px;color:var(--dim)}
+.spinner{width:32px;height:32px;border-radius:50%;border:3px solid rgba(250,204,21,.15);border-top-color:var(--yellow);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{padding:18px;border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.08);color:#F3C0C0;border-radius:8px}
+.footer{text-align:center;padding:22px;color:var(--dim);font-size:10px;border-top:1px solid var(--border)}
+.footer span{color:var(--yellow)}
+.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.64);opacity:0;pointer-events:none;transition:.2s;z-index:1000}
+.drawer-backdrop.open{opacity:1;pointer-events:auto}
+.drawer{position:absolute;top:0;right:0;width:min(305px,100vw);height:100%;background:#f3f4f6;transform:translateX(100%);transition:.2s;display:flex;flex-direction:column}
+.drawer-backdrop.open .drawer{transform:translateX(0)}
+.drawer-header{min-height:78px;padding:8px 8px 7px;background:#0f172a;color:#fff;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px;overflow:hidden}
+.drawer-title{min-width:0;flex:1 1 100%}.drawer-title strong,.drawer-title span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.drawer-title span{color:var(--muted);font-size:10px;margin-top:3px}
+.drawer-tools{display:flex;gap:6px;flex:1 1 100%;justify-content:flex-end}.drawer-tools .btn{padding:5px 8px;font-size:9px;white-space:nowrap}
+.drawer iframe{width:100%;height:100%;border:0;background:#f3f4f6}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:10px}
+@media(max-width:1500px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.shell{grid-template-columns:210px minmax(0,1fr)}}
+@media(max-width:900px){.topnav{grid-template-columns:1fr auto}.nav-links{display:none}.nav-stat{padding-right:12px}.shell{display:block}.sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--border)}.content{padding:12px}.stats-grid{grid-template-columns:1fr 1fr}.drawer{width:100vw}}
+
+/* ── Panel de filtros colapsable ── */
+.shell{transition:grid-template-columns .24s ease}
+.sidebar{
+  transition:width .24s ease,padding .24s ease,opacity .18s ease,border-color .18s ease;
+}
+.shell.filters-collapsed{grid-template-columns:0 minmax(0,1fr)}
+.shell.filters-collapsed .sidebar{
+  width:0;
+  padding-left:0;
+  padding-right:0;
+  border-right-color:transparent;
+  overflow:hidden;
+  opacity:0;
+  pointer-events:none;
+}
+.nav-filter-toggle{
+  width:32px;height:32px;border-radius:7px;border:1px solid rgba(250,204,21,.22);
+  background:rgba(250,204,21,.07);color:var(--yellow);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;
+}
+.nav-filter-toggle:hover{background:rgba(250,204,21,.13);border-color:rgba(250,204,21,.42)}
+
+/* ── Indicadores colapsables ── */
+.indicadores-panel{
+  background:transparent;
+  margin-bottom:6px;
+}
+.indicadores-header{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:7px;
+}
+.indicadores-title{
+  display:flex;align-items:center;gap:8px;color:var(--text);font-size:11px;
+  font-weight:800;text-transform:uppercase;letter-spacing:.07em;
+}
+.active-summary{font-size:9px;color:var(--yellow);font-weight:700;text-transform:none;letter-spacing:0;padding:3px 7px;border-radius:10px;background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.16)}
+.active-summary:empty{display:none}
+.indicadores-toggle{
+  border:1px solid var(--border2);background:rgba(255,255,255,.035);
+  color:var(--muted);border-radius:6px;padding:4px 8px;cursor:pointer;
+  font-size:9px;font-weight:800;
+}
+.indicadores-toggle:hover{color:var(--yellow);border-color:rgba(250,204,21,.35)}
+.indicadores-content{
+  overflow:hidden;
+  max-height:900px;
+  opacity:1;
+  transition:max-height .24s ease,opacity .18s ease,margin .24s ease;
+}
+.indicadores-panel.collapsed .indicadores-content{
+  max-height:0;
+  opacity:0;
+  margin:0;
+}
+
+/* ── Tema ETOP claro: superficies de trabajo descansadas ── */
+:root{
+  --bg:#eef2f7;
+  --surface:#ffffff;
+  --surface2:#f8fafc;
+  --surface3:#e7edf5;
+  --border:#d7e0ea;
+  --border2:#c7d2df;
+  --yellow:#d6a900;
+  --text:#334155;
+  --text-muted:#64748b;
+  --text-dim:#7b8da1;
+  --muted:var(--text-muted);
+  --dim:var(--text-dim);
+  --blue:#3578b8;
+  --green:#27815e;
+  --amber:#a87500;
+  --red:#c24141;
+  --purple:#7557a8;
+  --orange:#b7652d;
+}
+body{background:var(--bg);color:var(--text)}
+.topnav{background:#172033;color:#e8edf4;border-bottom:3px solid var(--yellow);box-shadow:0 2px 10px rgba(15,23,42,.12)}
+.nav-brand{border-right-color:rgba(255,255,255,.09)}
+.nav-title{color:#f1f5f9}
+.nav-link{color:#aeb9c8}
+.nav-link:hover,.nav-link.active{color:#fff}
+.nav-stat{color:#aeb9c8}.nav-stat span{color:#f0d55d}
+.sidebar{background:#e4eaf2;border-right-color:#cbd5e1}
+.sidebar-title{color:#475569}
+.field label{color:#64748b}
+.control{background:#fff;border-color:#cbd5e1;color:#334155}
+.control option{background:#fff;color:#334155}
+.control:focus{border-color:#c6a000;box-shadow:0 0 0 3px rgba(214,169,0,.12)}
+.check{color:#64748b}
+.content{background:var(--bg)}
+.indicadores-title{color:#475569}
+.active-summary{color:#806600;background:#fff7d6;border-color:#ead88c}
+.indicadores-toggle,.btn{background:#fff;border-color:#cbd5e1;color:#52657a}
+.indicadores-toggle:hover,.btn:hover{background:#f8fafc;color:#334155;border-color:#aebdcd}
+.stat{background:#fff;border-color:#d7e0ea;box-shadow:0 2px 8px rgba(51,65,85,.045)}
+.stat:hover{border-color:#c7ad49;box-shadow:0 4px 12px rgba(51,65,85,.07)}
+.stat.active{border-color:#d6a900;box-shadow:0 0 0 2px rgba(214,169,0,.12)}
+.stat-num{color:#334155}
+.stat-label,.results-meta,.page-size{color:#64748b}
+.results-meta strong{color:#806600}
+.acc{background:#fff;border-color:#d7e0ea;box-shadow:0 3px 10px rgba(51,65,85,.045)}
+.acc-head:hover{background:#f8fafc}
+.acc-nrc{color:#263548}
+.acc-course{color:#58708b}
+.acc-body{background:#f8fafc;border-top-color:#d7e0ea}
+.course-actions{background:#f3f6fa;border-bottom-color:#d7e0ea}
+.btn-primary{background:#e9f2fc;border-color:#b9d3ef;color:#285f96}
+.btn-yellow{background:#fff7d8;border-color:#e4cd78;color:#7a6100}
+.btn-purple{background:#f0eaf8;border-color:#d1c1e5;color:#63478d}
+.btn-danger{background:#fae9e9;border-color:#e8b9b9;color:#a33d3d}
+.chip-date{background:#edf3f8;color:#52657a;border-color:#d5e0ea}
+.chip-state{background:#edf1f5;color:#526173;border-color:#d4dde7}
+.chip-green{background:#e8f5ef;color:#276b52;border-color:#b9dfcf}
+.chip-red{background:#fae6e6;color:#a33535;border-color:#efbcbc}
+.chip-amber{background:#fff4ce;color:#806100;border-color:#ead38b}
+.chip-purple{background:#f0eaf8;color:#63478d;border-color:#d1c1e5}
+.inc-table th{background:#e7edf5;color:#65778b;border-bottom-color:#cbd5e1}
+.inc-table td{color:#52657a;border-bottom-color:#e5ebf1}
+.inc-table tr:hover td{background:#f2f6fa}
+.idcell{color:#345577!important}
+.sol-cell{color:#27815e!important}
+.empty-panel,.loading{color:#64748b}
+.empty-green{color:#27815e}.empty-gray{color:#7b8da1}
+.page-btn{background:#fff;border-color:#cbd5e1;color:#64748b}
+.page-btn:hover:not(:disabled),.page-btn.active{background:#fff7d8;border-color:#d6bd58;color:#725b00}
+.footer{color:#64748b;border-top-color:#d7e0ea}.footer span{color:#806600}
+::-webkit-scrollbar-thumb{background:#b9c5d2}
+
+</style>
+
+<style>
+/* ===== Tabla incidencias responsiva V2 · 20260924 ===== */
+@media (min-width:1000px){
+  .table-wrap{overflow-y:auto;overflow-x:hidden}
+  .inc-table{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    table-layout:fixed!important;
+  }
+  .inc-table th,.inc-table td{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .inc-table th:nth-child(1),.inc-table td:nth-child(1){width:7%}
+  .inc-table th:nth-child(2),.inc-table td:nth-child(2){width:10%}
+  .inc-table th:nth-child(3),.inc-table td:nth-child(3){width:10%}
+  .inc-table th:nth-child(4),.inc-table td:nth-child(4){width:13%}
+  .inc-table th:nth-child(5),.inc-table td:nth-child(5){width:25%}
+  .inc-table th:nth-child(6),.inc-table td:nth-child(6){width:25%}
+  .inc-table th:nth-child(7),.inc-table td:nth-child(7){width:10%}
+  .inc-table .text-cell{
+    min-width:0!important;
+    max-width:none!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere;
+  }
+}
+@media (min-width:1000px) and (max-width:1350px){
+  .inc-table th{font-size:7px;padding:7px 5px}
+  .inc-table td{font-size:9px;padding:7px 5px}
+}
+@media (max-width:999px){
+  .table-wrap{overflow:auto}
+  .inc-table{min-width:900px!important}
+}
+</style>
+
+
+<script>
+if(new URLSearchParams(location.search).get('embedded')==='1'){
+  document.documentElement.classList.add('embedded');
+}
+</script>
+<style>
+/* ===== Modo embebido ETOP · incidencias compactas · 20260924 ===== */
+html.embedded,html.embedded body{
+  width:100%;
+  max-width:100%;
+  min-height:100%;
+  overflow-x:hidden;
+}
+html.embedded .topnav{display:none!important}
+html.embedded .shell{
+  grid-template-columns:185px minmax(0,1fr)!important;
+  min-height:100vh!important;
+}
+html.embedded .sidebar{
+  position:sticky!important;
+  top:0!important;
+  height:100vh!important;
+  padding:9px 8px!important;
+  overflow-y:auto!important;
+}
+html.embedded .sidebar-title{
+  font-size:10px!important;
+  margin-bottom:8px!important;
+}
+html.embedded .field{
+  gap:3px!important;
+  margin-bottom:8px!important;
+}
+html.embedded .field label{
+  font-size:7.5px!important;
+  letter-spacing:.06em!important;
+}
+html.embedded .control{
+  height:30px!important;
+  padding:0 8px!important;
+  font-size:10px!important;
+}
+html.embedded .check{
+  margin:6px 0!important;
+  gap:6px!important;
+  font-size:9px!important;
+}
+html.embedded .sidebar .btn{
+  padding:6px 8px!important;
+  font-size:9px!important;
+}
+html.embedded .content{
+  padding:8px 10px 18px!important;
+}
+html.embedded .indicadores-panel{margin-bottom:4px!important}
+html.embedded .indicadores-header{margin-bottom:5px!important}
+html.embedded .indicadores-title{font-size:9px!important}
+html.embedded .indicadores-toggle{padding:3px 7px!important;font-size:8px!important}
+html.embedded .stats-grid{
+  grid-template-columns:repeat(4,minmax(105px,1fr))!important;
+  gap:6px!important;
+  margin-bottom:6px!important;
+}
+html.embedded .stat{
+  min-height:49px!important;
+  padding:6px 8px!important;
+}
+html.embedded .stat-num{font-size:17px!important}
+html.embedded .stat-label{font-size:7.5px!important;margin-top:3px!important}
+html.embedded .toolbar{margin:7px 0!important;gap:8px!important}
+html.embedded .results-meta{font-size:9.5px!important}
+html.embedded .page-size{font-size:9px!important}
+html.embedded .page-size select{height:29px!important}
+html.embedded .btn{padding:6px 8px!important;font-size:9px!important}
+html.embedded .acc-list{gap:6px!important}
+html.embedded .acc-head{padding:8px 10px!important;gap:8px!important}
+html.embedded .acc-nrc{font-size:10px!important}
+html.embedded .acc-course{font-size:9px!important;margin-top:3px!important}
+html.embedded .meta-row{margin-top:5px!important;gap:4px!important}
+html.embedded .chip{padding:2px 5px!important;font-size:7.5px!important}
+html.embedded .course-actions{padding:7px 9px!important;gap:5px!important}
+html.embedded .inc-table th{padding:6px 6px!important;font-size:7px!important}
+html.embedded .inc-table td{padding:6px 6px!important;font-size:8.5px!important}
+html.embedded .pagination{margin-top:9px!important}
+
+@media(max-width:1150px){
+  html.embedded .shell{grid-template-columns:168px minmax(0,1fr)!important}
+  html.embedded .stats-grid{grid-template-columns:repeat(3,minmax(100px,1fr))!important}
+  html.embedded .content{padding:7px 8px 14px!important}
+}
+@media(max-width:900px){
+  html.embedded .shell{grid-template-columns:150px minmax(0,1fr)!important;display:grid!important}
+  html.embedded .sidebar{
+    position:sticky!important;
+    top:0!important;
+    height:100vh!important;
+    border-right:1px solid var(--border)!important;
+    border-bottom:0!important;
+  }
+  html.embedded .stats-grid{grid-template-columns:repeat(2,minmax(100px,1fr))!important}
+}
+
+/* ETOP · Incidencias: ancho notebook y acceso a filtros dentro del iframe */
+.notebook-filter-btn{display:none;height:29px;padding:0 10px;border-radius:7px;border:1px solid #456586;background:#203751;color:#dbe7f5;font-size:10px;font-weight:750;cursor:pointer;margin:0 0 8px}
+@media(max-width:1450px){
+ .shell.filters-collapsed{grid-template-columns:0 minmax(0,1fr)!important}
+ .shell.filters-collapsed .sidebar{width:0!important;min-width:0!important;padding:0!important;opacity:0!important;overflow:hidden!important;pointer-events:none!important}
+ .content{min-width:0;padding:10px 12px 20px}
+ .stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+ .stat{min-width:0;min-height:52px;padding:7px 9px}
+ .stat-num{font-size:18px}
+ .notebook-filter-btn{display:inline-flex;align-items:center}
+ html.embedded .shell.filters-collapsed{grid-template-columns:0 minmax(0,1fr)!important}
+ html.embedded .shell.filters-collapsed .sidebar{width:0!important;padding:0!important;opacity:0!important;pointer-events:none!important}
+ html.embedded .content{padding:7px 9px!important}
+ html.embedded .notebook-filter-btn{display:inline-flex!important}
+}
+@media(max-width:800px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+</style>
+
+</head>
+<body>
+<nav class="topnav">
+  <div class="nav-brand">
+    <button id="btnFiltros" class="nav-filter-toggle" type="button" onclick="toggleFiltros()" title="Ocultar filtros" aria-label="Mostrar u ocultar filtros" aria-expanded="true">☰</button>
+    <span class="nav-dot"></span><span class="nav-title">Incidencias ETOP</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html" title="Volver al Portal ETOP">← Portal</a>
+    <button class="nav-link" onclick="focusSearch()">⌕ Buscar</button>
+    <button class="nav-link active" onclick="go('consolidado')">▣ Consolidado</button>
+  </div>
+  <div class="nav-stat">Fecha de consulta: <span id="updated">—</span></div>
+</nav>
+
+<div class="shell" id="appShell">
+  <aside class="sidebar" id="filtros">
+    <div class="sidebar-title">⚲ FILTROS</div>
+
+    <div class="field">
+      <label>Búsqueda general</label>
+      <input id="q" class="control" placeholder="NRC, curso, tutor…" oninput="scheduleRender()"/>
+    </div>
+
+    <div class="field">
+      <label>Facultad</label>
+      <select id="fFacultad" class="control" onchange="renderAll()"><option value="">Todas</option></select>
+    </div>
+
+    <div class="field">
+      <label>Estado del curso</label>
+      <select id="fEstadoCurso" class="control" onchange="renderAll()"><option value="">Todos</option></select>
+    </div>
+
+    <div class="field">
+      <label>Fecha de inicio desde</label>
+      <input id="fFechaDesde" class="control" type="date" onchange="renderAll()"/>
+    </div>
+
+    <div class="field">
+      <label>Fecha de inicio hasta</label>
+      <input id="fFechaHasta" class="control" type="date" onchange="renderAll()"/>
+    </div>
+
+    <div class="field">
+      <label>Estado QA2</label>
+      <select id="fQa" class="control" onchange="renderAll()">
+        <option value="">Todos</option>
+        <option value="CON INCIDENCIA">Con incidencia</option>
+        <option value="SIN INCIDENCIA">Sin incidencia</option>
+        <option value="SIN REGISTRO">QA2 pendiente</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Estado incidencia</label>
+      <select id="fEstadoInc" class="control" onchange="renderAll()"><option value="">Todos</option></select>
+    </div>
+
+    <div class="field">
+      <label>Tipo de QA</label>
+      <select id="fTipoQa" class="control" onchange="renderAll()"><option value="">Todos</option></select>
+    </div>
+
+    <div class="field">
+      <label>Categoría</label>
+      <select id="fCategoria" class="control" onchange="renderAll()"><option value="">Todas</option></select>
+    </div>
+
+    <div class="field">
+      <label>Tutor</label>
+      <select id="fTutor" class="control" onchange="renderAll()"><option value="">Todos</option></select>
+    </div>
+
+    <label class="check"><input id="onlyInc" type="checkbox" onchange="renderAll()"> Solo con incidencia</label>
+    <label class="check"><input id="onlyPendQa" type="checkbox" onchange="renderAll()"> Solo pendientes QA2</label>
+
+    <button class="btn full" onclick="clearFilters()">↻ Limpiar filtros</button>
+  </aside>
+
+  <main class="content"><button type="button" class="notebook-filter-btn" id="btnFiltroNotebook" onclick="toggleFiltros()" aria-label="Mostrar u ocultar filtros de incidencias">⚲ Filtros</button>
+    <section id="indicadores" class="indicadores-panel">
+      <div class="indicadores-header">
+        <div class="indicadores-title">⌁ Resumen <span id="statActive" class="active-summary"></span></div>
+        <button id="btnIndicadores" class="indicadores-toggle" type="button" onclick="toggleIndicadores()" aria-expanded="true">▴ Ocultar resumen</button>
+      </div>
+      <div class="indicadores-content">
+        <div id="stats" class="stats-grid">
+          <div class="loading" style="grid-column:1/-1"><span class="spinner"></span><span>Cargando datos…</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="consolidado">
+      <div class="toolbar">
+        <div class="results-meta" id="meta">Cargando…</div>
+        <div class="toolbar-actions">
+          <label class="page-size">Filas por página
+            <select id="pageSizeSelect" class="control" onchange="changePageSize(Number(this.value))">
+              <option value="20">20</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+            </select>
+          </label>
+          <button class="btn" onclick="openVisible(true)">▾ Expandir</button>
+          <button class="btn" onclick="openVisible(false)">▴ Contraer</button>
+        </div>
+      </div>
+
+      <div id="list" class="acc-list">
+        <div class="loading"><span class="spinner"></span><span>Cargando cursos e incidencias…</span></div>
+      </div>
+      <div id="pagination" class="pagination"></div>
+    </section>
+  </main>
+</div>
+
+<footer class="footer">
+  Portal ETOP · Datos desde <span>nrcs.json</span> e <span>incidencias.json</span>
+</footer>
+
+<div id="drawerBackdrop" class="drawer-backdrop" aria-hidden="true">
+  <aside class="drawer">
+    <header class="drawer-header">
+      <div class="drawer-title">
+        <strong id="drawerTitle">Gestión</strong>
+        <span id="drawerSubtitle"></span>
+      </div>
+      <div class="drawer-tools">
+        <a id="drawerOpenNew" class="btn" href="#" target="_blank" rel="noopener">Abrir aparte</a>
+        <button class="btn btn-danger" onclick="closeDrawer()">Cerrar</button>
+      </div>
+    </header>
+    <iframe id="drawerFrame" title="Panel de gestión" allow="clipboard-read; clipboard-write"></iframe>
+  </aside>
+</div>
+
+<script>
+const BASE='https://raw.githubusercontent.com/tutoriaonlinepostgrado/sitiowebetop/main/';
+const URLS={
+  cursos:BASE+'nrcs.json',
+  incidencias:BASE+'incidencias.json'
+};
+const POWER_APPS_URL=
+  'https://apps.powerapps.com/play/e/default-8fbed393-d03b-49f8-be79-cd5e1f590fb2/a/c71f7c75-4561-43ed-8824-0f1cb74d1967'+
+  '?tenantId=8fbed393-d03b-49f8-be79-cd5e1f590fb2'+
+  '&hint=e935542a-ea92-4f60-8f3e-4c805f2ddd64&source=iframe';
+
+// El generador debe abrirse desde GitHub Pages. raw.githubusercontent.com
+// entrega los HTML como texto plano y por eso mostraba el código fuente.
+const DERIVAR_URL='https://tutoriaonlinepostgrado.github.io/sitiowebetop/derivar_incidencia_qa2.html';
+const CONSOLIDADO_MASTER_URL=''; // Pega aquí la URL real cuando la tengas.
+const FORM_QA2='https://forms.office.com/Pages/ResponsePage.aspx?id=k9O-jzvQ-Em-ec1eH1kPsi4Tyu2CVbdJuVyBPGyJtFxUMDZaNk5YQ05PSDRMSEFYQjRLUzNDSThWSy4u&rad59c96540044fd99690c7a9ce42bca3=';
+const SP_VIEW='https://unabportal365.sharepoint.com/sites/actasynrc/Lists/NRC_TUTOR_QA2_INCIDENCIA/AllItems.aspx?viewid=407aa7f0-48a8-461d-9547-327d154dcc70&env=WebViewList';
+
+let all=[],filtered=[],page=1,pageSize=50,renderTimer=null,statMode='';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const norm=v=>String(v??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+const upper=v=>String(v??'').toUpperCase().trim();
+const bool=v=>v===true||String(v).toLowerCase()==='true';
+const go=id=>$(id)?.scrollIntoView({behavior:'smooth'});
+const focusSearch=()=>{go('filtros');setTimeout(()=>$('q')?.focus(),300)};
+
+function parseDate(v){if(!v)return null;const [y,m,d]=String(v).split('-').map(Number);return y&&m&&d?new Date(y,m-1,d):null}
+function fmtDate(v){const d=parseDate(v);return d?d.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'}):'—'}
+function chipState(v){const s=upper(v)||'—';return `<span class="chip chip-state">${esc(s)}</span>`}
+function sharePointCursoUrl(nrc){
+  const sep=SP_VIEW.includes('?')?'&':'?';
+  return SP_VIEW+sep+
+    'FilterField1=Title'+
+    '&FilterValue1='+encodeURIComponent(nrc);
+}
+function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(()=>renderAll(),150)}
+function cleanArray(v){return Array.isArray(v)?v:(v?.value||[])}
+
+function timeCurso(c){
+  const d=parseDate(c?.['fecha inicio']);
+  return d&&!Number.isNaN(d.getTime())?d.getTime():null;
+}
+
+function compareCursosOperativos(a,b){
+  const prioridad={'ACTIVO':0,'EN CIERRE':1,'PREPARACION':2,'CERRADO':3};
+  const pa=prioridad[a.estado]??9,pb=prioridad[b.estado]??9;
+  if(pa!==pb)return pa-pb;
+
+  const ta=timeCurso(a),tb=timeCurso(b);
+  if(ta===null&&tb===null)return String(a.nrc||'').localeCompare(String(b.nrc||''),'es',{numeric:true});
+  if(ta===null)return 1;
+  if(tb===null)return -1;
+
+  if(a.estado==='PREPARACION'){
+    const hoy=new Date();
+    hoy.setHours(0,0,0,0);
+    const now=hoy.getTime();
+    const aFuture=ta>=now,bFuture=tb>=now;
+
+    // Primero próximos inicios; después cualquier preparación antigua rezagada.
+    if(aFuture!==bFuture)return aFuture?-1:1;
+    return aFuture ? ta-tb : tb-ta;
+  }
+
+  // ACTIVO / EN CIERRE / CERRADO: primero los más recientes.
+  return tb-ta;
+}
+
+function toggleFiltros(){
+  const shell=$('appShell');
+  const btn=$('btnFiltros');
+  if(!shell||!btn)return;
+
+  const oculto=shell.classList.toggle('filters-collapsed');
+  btn.setAttribute('aria-expanded',String(!oculto));
+  btn.title=oculto?'Mostrar filtros':'Ocultar filtros';
+}
+
+function toggleIndicadores(){
+  const panel=$('indicadores');
+  const btn=$('btnIndicadores');
+  if(!panel||!btn)return;
+
+  const cerrado=panel.classList.toggle('collapsed');
+  btn.setAttribute('aria-expanded',String(!cerrado));
+  btn.textContent=cerrado?'▾ Mostrar resumen':'▴ Ocultar resumen';
+}
+
+function openDrawer(title,subtitle,url){
+  $('drawerTitle').textContent=title;
+  $('drawerSubtitle').textContent=subtitle||'';
+  $('drawerFrame').src=url;
+  $('drawerOpenNew').href=url;
+  $('drawerBackdrop').classList.add('open');
+  $('drawerBackdrop').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  $('drawerBackdrop').classList.remove('open');
+  $('drawerBackdrop').setAttribute('aria-hidden','true');
+  $('drawerFrame').src='about:blank';
+  document.body.style.overflow='';
+}
+function openPowerApp(nrc,curso){
+  const url=POWER_APPS_URL+'&nrc='+encodeURIComponent(nrc);
+  openDrawer('Gestión de incidencias (Power Apps)',nrc+' · '+curso,url);
+}
+
+function buildDeriveUrl(c){
+  const rows=c.pendientes;
+  const serial=rows.map(i=>[
+    i.idIncidencia||i.id||'',
+    i.categoria||'',
+    i.semanaUnidad||i.semana||'',
+    i.descripcionIncidencia||'',
+    i.urlEvidencia||''
+  ].map(v=>String(v).trim()).join('~')).join('|');
+
+  const params=new URLSearchParams({
+    nrc:c.nrc||'',
+    nombre_curso:c.curso||'',
+    fecha_inicio:c['fecha inicio']||'',
+    url_adjunto:rows.find(i=>i.urlEvidencia)?.urlEvidencia||'',
+    incidencias:serial
+  });
+  return DERIVAR_URL+'?'+params.toString();
+}
+function buildMasterUrl(c){
+  if(!CONSOLIDADO_MASTER_URL)return '';
+  const sep=CONSOLIDADO_MASTER_URL.includes('?')?'&':'?';
+  return CONSOLIDADO_MASTER_URL+sep+'nrc='+encodeURIComponent(c.nrc);
+}
+
+async function load(){
+  try{
+    const stamp='?t='+Date.now();
+    const [rc,ri]=await Promise.all([
+      fetch(URLS.cursos+stamp),
+      fetch(URLS.incidencias+stamp)
+    ]);
+
+    if(!rc.ok||!ri.ok){
+      throw new Error(`Error de carga: nrcs.json ${rc.status}, incidencias.json ${ri.status}`);
+    }
+
+    const cursos=cleanArray(await rc.json());
+    const incs=cleanArray(await ri.json());
+
+    // incidencias.json se cruza únicamente con el ID del curso en nrcs.json
+    const incMap=new Map();
+    for(const i of incs){
+      const k=String(i.cursoId??'').trim();
+      if(!k)continue;
+      if(!incMap.has(k))incMap.set(k,[]);
+      incMap.get(k).push(i);
+    }
+
+    all=cursos.map(c=>{
+      const registros=incMap.get(String(c.id??c.ID??'').trim())||[];
+      const con=registros.filter(x=>upper(x.qaIncidencias)==='CON INCIDENCIA');
+      const sin=registros.filter(x=>upper(x.qaIncidencias)==='SIN INCIDENCIA');
+      const pendientes=con.filter(x=>upper(x.estadoIncidencia)==='PENDIENTE');
+      const corregidas=con.filter(x=>upper(x.estadoIncidencia)==='CORREGIDA');
+      const derivadas=con.filter(x=>upper(x.estadoIncidencia)==='DERIVADO');
+
+      const curso=String(
+        c['nombre curso']||
+        c['nombre_curso']||
+        c.NOMBRE_CURSO||
+        '—'
+      ).trim();
+
+      const programa=String(
+        c['nombre programa']||
+        c['nombre_programa']||
+        c.NOMBRE_PROGRAMA||
+        '—'
+      ).trim();
+
+      const codigoCurso=String(
+        c['codigo curso']||
+        c['codigo_curso']||
+        c.CODIGO_CURSO||
+        ''
+      ).trim();
+
+      const materia=String(c.materia||c.MATERIA||'').trim();
+      const intake=String(c.intake||c['INTAKE O VERSION']||'').trim();
+      const periodo=String(c.periodo||c.PERIODO||'').trim();
+      const tutor=String(c.tutor||c['NOMBRE TUTOR']||'Por asignar').trim();
+      const facultad=String(c.facultad||c.FACULTAD||'—').trim();
+      const estado=upper(c.estado||c.ESTADO);
+
+      const search=[
+        c.nrc,curso,programa,codigoCurso,materia,intake,periodo,
+        tutor,facultad,estado,c['fecha inicio'],c['fecha fin'],
+        ...registros.flatMap(i=>[
+          i.categoria,i.estadoIncidencia,i.qaIncidencias,i.tipoQA,
+          i.descripcionIncidencia,i.descripcionSolucion
+        ])
+      ].join(' ');
+
+      return{
+        ...c,
+        curso,programa,codigoCurso,materia,intake,periodo,
+        tutor,facultad,estado,registros,con,sin,
+        pendientes,corregidas,derivadas,_s:norm(search)
+      };
+    }).sort(compareCursosOperativos);
+
+    populateFilters();
+    // Esta fecha indica cuándo se consultaron los JSON. No inventa una hora de actualización.
+    $('updated').textContent=new Date().toLocaleDateString('es-CL',{
+      day:'2-digit',month:'2-digit',year:'numeric'
+    });
+
+    // Permite abrir esta página directamente desde el Explorador con ?nrc=XXXX.
+    const nrcDirecto=new URLSearchParams(window.location.search).get('nrc')?.trim()||'';
+    if(nrcDirecto)$('q').value=nrcDirecto;
+    renderAll();
+
+    if(nrcDirecto){
+      requestAnimationFrame(()=>{
+        const objetivo=[...document.querySelectorAll('.acc')]
+          .find(card=>norm(card.dataset.nrc)===norm(nrcDirecto));
+        if(objetivo){
+          objetivo.classList.add('open');
+          objetivo.scrollIntoView({behavior:'smooth',block:'start'});
+        }
+      });
+    }
+
+  }catch(e){
+    console.error(e);
+    $('list').innerHTML=`<div class="error"><strong>No se pudieron cargar los datos.</strong><br>${esc(e.message)}</div>`;
+    $('stats').innerHTML='';
+  }
+}
+
+function fillSelect(id,values){
+  const s=$(id);
+  values.forEach(v=>{
+    const o=document.createElement('option');
+    o.value=v;o.textContent=v;s.appendChild(o);
+  });
+}
+function populateFilters(){
+  fillSelect('fFacultad',[...new Set(all.map(x=>x.facultad).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')));
+  fillSelect('fEstadoCurso',[...new Set(all.map(x=>x.estado).filter(Boolean))].sort());
+  fillSelect('fTutor',[...new Set(all.map(x=>x.tutor).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')));
+  fillSelect('fEstadoInc',[...new Set(all.flatMap(x=>x.con.map(i=>upper(i.estadoIncidencia))).filter(Boolean))].sort());
+  fillSelect('fTipoQa',[...new Set(all.flatMap(x=>x.registros.map(i=>upper(i.tipoQA))).filter(Boolean))].sort());
+  fillSelect('fCategoria',[...new Set(all.flatMap(x=>x.registros.map(i=>String(i.categoria||'').trim())).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')));
+}
+
+function applyFilters(){
+  const q=norm($('q').value);
+  const fac=$('fFacultad').value;
+  const ec=$('fEstadoCurso').value;
+  const fechaDesde=$('fFechaDesde').value;
+  const fechaHasta=$('fFechaHasta').value;
+  const qa=$('fQa').value;
+  const ei=$('fEstadoInc').value;
+  const tipo=$('fTipoQa').value;
+  const cat=$('fCategoria').value;
+  const tutor=$('fTutor').value;
+  const onlyInc=$('onlyInc').checked;
+  const onlyPendQa=$('onlyPendQa').checked;
+
+  filtered=all.filter(c=>{
+    if(q&&!c._s.includes(q))return false;
+    if(fac&&c.facultad!==fac)return false;
+    if(ec&&c.estado!==ec)return false;
+
+    const fechaInicio=String(c['fecha inicio']||'').trim();
+    if(fechaDesde&&(!fechaInicio||fechaInicio<fechaDesde))return false;
+    if(fechaHasta&&(!fechaInicio||fechaInicio>fechaHasta))return false;
+
+    if(tutor&&c.tutor!==tutor)return false;
+    if(qa==='CON INCIDENCIA'&&c.con.length===0)return false;
+    if(qa==='SIN INCIDENCIA'&&c.sin.length===0)return false;
+    if(qa==='SIN REGISTRO'&&c.registros.length>0)return false;
+    if(ei&&!c.con.some(i=>upper(i.estadoIncidencia)===ei))return false;
+    if(tipo&&!c.registros.some(i=>upper(i.tipoQA)===tipo))return false;
+    if(cat&&!c.registros.some(i=>String(i.categoria||'').trim()===cat))return false;
+    if(onlyInc&&c.con.length===0)return false;
+    if(onlyPendQa&&c.registros.length>0)return false;
+
+    if(statMode==='CON'&&c.con.length===0)return false;
+    if(statMode==='SIN'&&c.sin.length===0)return false;
+    if(statMode==='PENDQA'&&c.registros.length>0)return false;
+    if(statMode==='PENDINC'&&c.pendientes.length===0)return false;
+    if(statMode==='CORR'&&c.corregidas.length===0)return false;
+    if(statMode==='DER'&&c.derivadas.length===0)return false;
+    return true;
+  }).sort(compareCursosOperativos);
+}
+
+function renderAll(){page=1;applyFilters();renderStats();renderPage()}
+function renderStats(){
+  const total=filtered.length;
+  const con=filtered.filter(x=>x.con.length).length;
+  const sin=filtered.filter(x=>x.sin.length).length;
+  const pendQa=filtered.filter(x=>!x.registros.length).length;
+  const pendInc=filtered.reduce((n,x)=>n+x.pendientes.length,0);
+  const corr=filtered.reduce((n,x)=>n+x.corregidas.length,0);
+  const der=filtered.reduce((n,x)=>n+x.derivadas.length,0);
+
+  const cards=[
+    ['','Total NRC',total,'Cursos','--blue'],
+    ['CON','Con incidencia',con,'NRC afectados','--red'],
+    ['SIN','Sin incidencia',sin,'NRC revisados','--green'],
+    ['PENDQA','QA2 pendiente',pendQa,'Sin revisión','--amber'],
+    ['PENDINC','Incidencias pendientes',pendInc,'En revisión','--red'],
+    ['CORR','Corregidas',corr,'Resueltas','--green'],
+    ['DER','Derivadas',der,'A otras áreas','--orange']
+  ];
+
+  const activeLabels={CON:'Con incidencia',SIN:'Sin incidencia',PENDQA:'QA2 pendiente',PENDINC:'Incidencias pendientes',CORR:'Corregidas',DER:'Derivadas'};
+  $('statActive').textContent=statMode?`Filtro: ${activeLabels[statMode]||statMode}`:'';
+
+  $('stats').innerHTML=cards.map(([mode,label,num,sub,color])=>
+    `<div class="stat ${statMode===mode?'active':''}" style="--accent:var(${color})" onclick="setStat('${mode}')">
+      <div class="stat-num">${num.toLocaleString('es-CL')}</div>
+      <div class="stat-label">${label}</div>
+    </div>`
+  ).join('');
+}
+function setStat(mode){statMode=statMode===mode?'':mode;applyFilters();page=1;renderStats();renderPage()}
+function clearFilters(){
+  ['q','fFacultad','fEstadoCurso','fFechaDesde','fFechaHasta','fQa','fEstadoInc','fTipoQa','fCategoria','fTutor'].forEach(id=>$(id).value='');
+  $('onlyInc').checked=false;$('onlyPendQa').checked=false;statMode='';renderAll();
+}
+function changePageSize(n){pageSize=n;page=1;renderPage()}
+
+function renderPage(){
+  const pages=Math.max(1,Math.ceil(filtered.length/pageSize));
+  if(page>pages)page=pages;
+  const start=(page-1)*pageSize,end=Math.min(start+pageSize,filtered.length),slice=filtered.slice(start,end);
+  const ordenTxt=$('fEstadoCurso').value==='PREPARACION'?' · Orden: próximos inicios primero':'';
+  $('meta').innerHTML=`CURSOS (<strong>${filtered.length.toLocaleString('es-CL')}</strong>) · Mostrando <strong>${filtered.length?start+1:0}–${end}</strong>${ordenTxt}`;
+  $('list').innerHTML=slice.length?slice.map(renderCourse).join(''):`<div class="empty-panel empty-gray">No hay cursos que coincidan con los filtros.</div>`;
+  renderPagination(pages);
+}
+
+function renderCourse(c){
+  const cnt=c.con.length,hasSin=c.sin.length>0,noReg=c.registros.length===0;
+  const accent=cnt?'#f87171':hasSin?'#4ade80':'#facc15';
+
+  const mainBadge=cnt
+    ?`<span class="chip chip-red">CON ${cnt} INCIDENCIA${cnt===1?'':'S'}</span>`
+    :hasSin
+      ?`<span class="chip chip-green">SIN INCIDENCIAS</span>`
+      :`<span class="chip chip-amber">QA2 PENDIENTE</span>`;
+
+  const counters=[
+    c.pendientes.length?`<span class="chip chip-amber">${c.pendientes.length} pendiente${c.pendientes.length===1?'':'s'}</span>`:'',
+    c.corregidas.length?`<span class="chip chip-green">${c.corregidas.length} corregida${c.corregidas.length===1?'':'s'}</span>`:'',
+    c.derivadas.length?`<span class="chip chip-purple">${c.derivadas.length} derivada${c.derivadas.length===1?'':'s'}</span>`:''
+  ].join('');
+
+  const body=cnt
+    ?renderTable(c,c.con)
+    :hasSin
+      ?`<div class="empty-panel empty-green">✅ QA2 revisado — Sin incidencias registradas.</div>`
+      :`<div class="empty-panel empty-gray">⏳ QA2 aún no realizado para este NRC.</div>`;
+
+  // La URL de Canvas pertenece al registro QA2, no a la incidencia.
+  // Se revisan TODOS los registros del NRC (CON o SIN incidencia) y se acepta
+  // tanto el alias del JSON como el nombre interno original de SharePoint.
+  const canvasReg=c.registros.find(x=>x.urlCanvas||x.URL_QA2_FI_Url);
+  const canvasRaw=canvasReg?.urlCanvas??canvasReg?.URL_QA2_FI_Url??'';
+  const canvas=typeof canvasRaw==='object'
+    ? String(canvasRaw.Url??canvasRaw.url??canvasRaw.Value??canvasRaw.value??'').trim()
+    : String(canvasRaw??'').trim();
+  const deriveUrl=buildDeriveUrl(c);
+  const masterUrl=buildMasterUrl(c);
+
+  return `<article class="acc" data-id="${esc(c.id)}" data-nrc="${esc(c.nrc)}" style="--acc:${accent}">
+    <div class="acc-head" onclick="toggleAcc(this)">
+      <div class="acc-left">
+        <div class="acc-title-line">
+          <span class="acc-nrc">${esc(c.nrc)}</span>${mainBadge}${counters}
+        </div>
+        <div class="acc-course">Curso: ${esc(c.curso)} · Programa: ${esc(c.programa)} · Tutor: ${esc(c.tutor)} · Facultad: ${esc(c.facultad)}</div>
+        <div class="meta-row">
+          <span class="chip chip-date">📅 ${fmtDate(c['fecha inicio'])} – ${fmtDate(c['fecha fin'])}</span>
+          ${chipState(c.estado)}
+          <span class="chip chip-state">🏛 ${esc(c.facultad)}</span>
+          ${c.intake?`<span class="chip chip-state">◫ ${esc(c.intake)}</span>`:''}
+          ${c.materia?`<span class="chip chip-state">⌁ ${esc(c.materia)}</span>`:''}
+        </div>
+      </div>
+      <span class="chev">▼</span>
+    </div>
+
+    <div class="acc-body">
+      <div class="course-actions">
+        <a class="btn btn-primary" href="${FORM_QA2+encodeURIComponent(c.id)}" target="_blank" rel="noopener">📋 Completar QA2</a>
+        ${canvas?`<a class="btn btn-primary" href="${esc(canvas)}" target="_blank" rel="noopener">↗ Ir a Canvas</a>`:''}
+        <a class="btn btn-yellow" href="${esc(deriveUrl)}" target="_blank" rel="noopener" ${c.pendientes.length?'':'aria-disabled="true"'}>✉ Derivar incidencia${c.pendientes.length>1?' ('+c.pendientes.length+')':''}</a>
+        <a class="btn btn-primary" href="${esc(masterUrl||'#')}" target="_blank" rel="noopener" ${masterUrl?'':'aria-disabled="true" title="Falta configurar CONSOLIDADO_MASTER_URL"'}>▣ Consolidado Master</a>
+        <a class="btn" href="${esc(sharePointCursoUrl(c.nrc))}" target="_blank" rel="noopener">✏ SharePoint</a>
+        <button class="btn btn-purple" onclick="event.stopPropagation();openPowerApp('${esc(c.nrc)}','${esc(c.curso)}')">✎ Gestionar</button>
+        <button class="btn" onclick="event.stopPropagation();copyNrc('${esc(c.nrc)}')">⧉ Copiar NRC</button>
+      </div>
+      ${body}
+    </div>
+  </article>`;
+}
+
+function renderTable(c,rows){
+  return `<div class="table-wrap">
+    <table class="inc-table">
+      <thead>
+        <tr>
+          <th># ID</th><th>Estado</th><th>Tipo QA</th><th>Categoría</th>
+          <th>Descripción incidencia</th><th>Solución</th><th>Adjuntos / evidencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.sort((a,b)=>String(a.idIncidencia||a.id).localeCompare(String(b.idIncidencia||b.id),'es')).map(i=>renderRow(c,i)).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function renderRow(c,i){
+  const st=upper(i.estadoIncidencia)||'—';
+  const cls=st==='PENDIENTE'?'chip-amber':st==='CORREGIDA'?'chip-green':st==='DERIVADO'?'chip-purple':'chip-state';
+  const evidence=i.urlEvidencia
+    ? `<a class="link-ico" href="${esc(i.urlEvidencia)}" target="_blank" rel="noopener" title="Abrir archivo de evidencia">🔍</a>`
+    : bool(i.tieneAdjuntos)
+      ? `<span class="link-ico" title="El registro indica que tiene adjuntos, pero no incluye URL de evidencia">📎</span>`
+      : '—';
+
+  return `<tr>
+    <td class="idcell">#${esc(i.idIncidencia||i.id||'—')}</td>
+    <td><span class="chip ${cls}">${esc(st)}</span></td>
+    <td>${esc(i.tipoQA||'—')}</td>
+    <td>${esc(i.categoria||'—')}</td>
+    <td class="text-cell">${esc(i.descripcionIncidencia||'—')}</td>
+    <td class="text-cell sol-cell">${esc(i.descripcionSolucion||'—')}</td>
+    <td class="center">${evidence}</td>
+  </tr>`;
+}
+
+function toggleAcc(head){head.closest('.acc').classList.toggle('open')}
+function openVisible(open){document.querySelectorAll('.acc').forEach(x=>x.classList.toggle('open',open))}
+function copyNrc(v){navigator.clipboard?.writeText(v)}
+function renderPagination(pages){
+  if(pages<=1){$('pagination').innerHTML='';return}
+  const nums=[],lo=Math.max(1,page-2),hi=Math.min(pages,page+2);
+  for(let i=lo;i<=hi;i++)nums.push(i);
+
+  $('pagination').innerHTML=
+    `<button class="page-btn" ${page===1?'disabled':''} onclick="setPage(${page-1})">‹</button>`+
+    `${lo>1?`<button class="page-btn" onclick="setPage(1)">1</button>${lo>2?'<span class="page-info">…</span>':''}`:''}`+
+    `${nums.map(n=>`<button class="page-btn ${n===page?'active':''}" onclick="setPage(${n})">${n}</button>`).join('')}`+
+    `${hi<pages?`${hi<pages-1?'<span class="page-info">…</span>':''}<button class="page-btn" onclick="setPage(${pages})">${pages}</button>`:''}`+
+    `<button class="page-btn" ${page===pages?'disabled':''} onclick="setPage(${page+1})">›</button>`+
+    `<span class="page-info">Página ${page} de ${pages}</span>`;
+}
+function setPage(n){page=n;renderPage();go('consolidado')}
+
+$('drawerBackdrop').addEventListener('click',e=>{if(e.target===$('drawerBackdrop'))closeDrawer()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+load();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  if(window.innerWidth<=1450){
+    const shell=document.getElementById('appShell');
+    if(shell&&!shell.classList.contains('filters-collapsed'))toggleFiltros();
+  }
+});
+</script>
+</body>
+</html>

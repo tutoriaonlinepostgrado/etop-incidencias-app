@@ -1,0 +1,8 @@
+{
+  "name": "Executive QA & Academic Governance - Incidencias ETOP",
+  "description": "Sistema consolidado de auditoría, control de calidad y gobernanza académica para incidencias de cursos ETOP QA2.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
