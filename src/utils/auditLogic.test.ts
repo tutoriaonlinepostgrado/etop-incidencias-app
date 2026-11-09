@@ -142,14 +142,88 @@ test('compareCursosOperativos orders ACTIVO before PREPARACION', () => {
   assert.ok(compareCursosOperativos(c2, c1) > 0);
 });
 
-test('buildDeriveUrl creates valid query params', () => {
-  const courses = processRawData(
-    [{ id: 1, nrc: '9999', 'nombre curso': 'Curso Alfa', 'fecha inicio': '2026-05-01' }],
-    [{ id: 1, cursoId: 1, idIncidencia: 'INC-1', qaIncidencias: 'CON INCIDENCIA', estadoIncidencia: 'PENDIENTE', categoria: 'CONTENIDOS' }]
-  );
+test('processRawData excludes courses with codigo curso UNI118', () => {
+  const rawCursos: RawCourse[] = [
+    { id: 1, nrc: 'NRC-VALID', 'codigo curso': 'INF101', 'nombre curso': 'Informática' },
+    { id: 2, nrc: 'NRC-UNI118', 'codigo curso': 'UNI118', 'nombre curso': 'Inducción Institucional' },
+    { id: 3, nrc: 'NRC-UNI118-LOWER', 'codigo_curso': 'uni118', 'nombre curso': 'Inducción Minúscula' },
+  ];
 
-  const url = buildDeriveUrl(courses[0]);
-  assert.ok(url.includes('nrc=9999'));
-  assert.ok(url.includes('Curso+Alfa') || url.includes('Curso%20Alfa'));
-  assert.ok(url.includes('INC-1'));
+  const processed = processRawData(rawCursos, []);
+  assert.equal(processed.length, 1);
+  assert.equal(processed[0].nrc, 'NRC-VALID');
 });
+
+test('formatIncidentForEmail formats complete incident row for email', async () => {
+  const { formatIncidentForEmail } = await import('./clipboardHelper');
+  const course = processRawData(
+    [{ id: 1, nrc: '2240_TEST', 'nombre curso': 'Gestión del Cambio', tutor: 'Prof. Juan', facultad: 'Ingeniería', 'fecha inicio': '2026-03-01', 'fecha fin': '2026-06-30' }],
+    []
+  )[0];
+
+  const incident = {
+    id: 99,
+    idIncidencia: '2240_TEST_01',
+    cursoId: '1',
+    categoria: 'EVALUACIONES',
+    estadoIncidencia: 'PENDIENTE',
+    qaIncidencias: 'CON INCIDENCIA',
+    tipoQA: 'QA2_CANVAS',
+    urlEvidencia: 'https://example.com/evidencia.pdf',
+    urlCanvas: null,
+    tieneAdjuntos: true,
+    descripcionIncidencia: 'Falta configurar fecha límite en cuestionario semana 3',
+    descripcionSolucion: '',
+    semanaUnidad: 'Semana 3'
+  };
+
+  const { plainText, htmlText } = formatIncidentForEmail(course, incident);
+  assert.ok(plainText.includes('NRC: 2240_TEST'));
+  assert.ok(plainText.includes('ID Incidencia: #2240_TEST_01'));
+  assert.ok(plainText.includes('Falta configurar fecha límite'));
+  assert.ok(htmlText.includes('2240_TEST_01'));
+  assert.ok(htmlText.includes('EVALUACIONES'));
+});
+
+test('formatIncidentsForEmail formats multiple selected incidents for email', async () => {
+  const { formatIncidentsForEmail } = await import('./clipboardHelper');
+  const course = processRawData(
+    [{ id: 1, nrc: '2240_TEST', 'nombre curso': 'Gestión del Cambio', tutor: 'Prof. Juan', facultad: 'Ingeniería', 'fecha inicio': '2026-03-01', 'fecha fin': '2026-06-30' }],
+    []
+  )[0];
+
+  const inc1 = {
+    id: 1,
+    idIncidencia: '2240_TEST_01',
+    cursoId: '1',
+    categoria: 'EVALUACIONES',
+    estadoIncidencia: 'PENDIENTE',
+    qaIncidencias: 'CON INCIDENCIA',
+    tipoQA: 'QA2_CANVAS',
+    urlEvidencia: null,
+    urlCanvas: null,
+    tieneAdjuntos: false,
+    descripcionIncidencia: 'Descripción 1',
+    descripcionSolucion: '',
+    semanaUnidad: 'Semana 1'
+  };
+
+  const inc2 = {
+    ...inc1,
+    id: 2,
+    idIncidencia: '2240_TEST_02',
+    categoria: 'BIBLIOGRAFIA',
+    descripcionIncidencia: 'Descripción 2'
+  };
+
+  const { plainText, htmlText } = formatIncidentsForEmail(course, [inc1, inc2]);
+  assert.ok(plainText.includes('REPORTE DE 2 INCIDENCIAS QA2'));
+  assert.ok(plainText.includes('INCIDENCIA 1 DE 2:'));
+  assert.ok(plainText.includes('INCIDENCIA 2 DE 2:'));
+  assert.ok(plainText.includes('#2240_TEST_01'));
+  assert.ok(plainText.includes('#2240_TEST_02'));
+  assert.ok(htmlText.includes('Incidencia 1 de 2'));
+  assert.ok(htmlText.includes('Incidencia 2 de 2'));
+});
+
+

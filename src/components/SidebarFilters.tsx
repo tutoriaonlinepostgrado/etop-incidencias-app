@@ -1,6 +1,6 @@
 import React from 'react';
 import { FilterState } from '../utils/auditLogic';
-import { Search, X, RotateCcw, Filter, Calendar } from 'lucide-react';
+import { Search, X, RotateCcw, Filter, ChevronLeft } from 'lucide-react';
 
 interface SidebarFiltersProps {
   filters: FilterState;
@@ -14,6 +14,7 @@ interface SidebarFiltersProps {
   tutores: string[];
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   isOpen: boolean;
+  onCloseMobile?: () => void;
 }
 
 export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
@@ -28,6 +29,7 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   tutores,
   searchInputRef,
   isOpen,
+  onCloseMobile,
 }) => {
   const updateField = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     onChange({ ...filters, [key]: value });
@@ -49,35 +51,48 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
   return (
     <aside
-      className={`bg-[#ffffff] border-r border-[#e2e8f0] transition-all duration-200 ease-in-out shrink-0 overflow-y-auto ${
+      className={`bg-white border-r border-[#e2e8f0] transition-all duration-200 ease-in-out shrink-0 overflow-y-auto ${
         isOpen
-          ? 'w-full md:w-64 lg:w-72 p-4 block'
+          ? 'w-full sm:w-52 md:w-56 p-3 block'
           : 'w-0 p-0 border-r-transparent hidden md:hidden'
       }`}
       aria-label="Filtros de búsqueda"
     >
-      <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#e2e8f0]">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-[#1d4ed8]" />
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#0f172a]">
-            Filtros Operativos
+      {/* Sidebar Header */}
+      <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-[#e2e8f0]">
+        <div className="flex items-center gap-1.5">
+          <Filter className="w-3.5 h-3.5 text-[#1d4ed8]" />
+          <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#0f172a]">
+            Filtros
           </h2>
         </div>
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="text-[11px] font-medium text-[#1d4ed8] hover:text-[#1e40af] transition-colors"
-          >
-            Limpiar
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="text-[10px] font-semibold text-[#1d4ed8] hover:text-[#1e40af] transition-colors"
+            >
+              Limpiar
+            </button>
+          )}
+          {onCloseMobile && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className="p-1 rounded text-[#64748b] hover:text-[#0f172a] sm:hidden"
+              title="Cerrar panel de filtros"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-3.5 text-xs">
+      <div className="space-y-2.5 text-[11px]">
         {/* Search */}
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-[#475569] mb-1">
             Búsqueda General
           </label>
           <div className="relative">
@@ -86,18 +101,18 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
               type="text"
               value={filters.q}
               onChange={(e) => updateField('q', e.target.value)}
-              placeholder="NRC, curso, tutor, código…"
-              className="w-full h-9 pl-8 pr-7 bg-white border border-[#cbd5e1] rounded text-[#0f172a] placeholder-[#94a3b8] text-xs focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
+              placeholder="NRC, curso, tutor…"
+              className="w-full h-8 pl-7 pr-6 bg-white border border-[#cbd5e1] rounded text-[#0f172a] placeholder-[#94a3b8] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all"
             />
-            <Search className="w-3.5 h-3.5 text-[#94a3b8] absolute left-2.5 top-3 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-[#94a3b8] absolute left-2 top-2.5 pointer-events-none" />
             {filters.q && (
               <button
                 type="button"
                 onClick={() => updateField('q', '')}
-                className="absolute right-2 top-2.5 text-[#94a3b8] hover:text-[#475569]"
+                className="absolute right-1.5 top-2 text-[#94a3b8] hover:text-[#475569]"
                 title="Borrar texto"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -105,15 +120,15 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
         {/* Facultad */}
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-[#475569] mb-1">
             Facultad
           </label>
           <select
             value={filters.facultad}
             onChange={(e) => updateField('facultad', e.target.value)}
-            className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-xs focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
+            className="w-full h-8 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all truncate"
           >
-            <option value="">Todas las facultades</option>
+            <option value="">Todas</option>
             {facultades.map((f) => (
               <option key={f} value={f}>
                 {f}
@@ -124,15 +139,15 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
         {/* Estado del Curso */}
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
-            Estado del Curso
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-[#475569] mb-1">
+            Estado Curso
           </label>
           <select
             value={filters.estadoCurso}
             onChange={(e) => updateField('estadoCurso', e.target.value)}
-            className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-xs focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
+            className="w-full h-8 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all"
           >
-            <option value="">Todos los estados</option>
+            <option value="">Todos</option>
             {estadosCurso.map((ec) => (
               <option key={ec} value={ec}>
                 {ec}
@@ -142,63 +157,59 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
         </div>
 
         {/* Fecha Inicio Rango */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1.5">
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
+            <label className="block text-[9.5px] font-bold uppercase tracking-wider text-[#475569] mb-0.5">
               Inicio Desde
             </label>
-            <div className="relative">
-              <input
-                type="date"
-                value={filters.fechaDesde}
-                onChange={(e) => updateField('fechaDesde', e.target.value)}
-                className="w-full h-9 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
-              />
-            </div>
+            <input
+              type="date"
+              value={filters.fechaDesde}
+              onChange={(e) => updateField('fechaDesde', e.target.value)}
+              className="w-full h-8 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all"
+            />
           </div>
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
+            <label className="block text-[9.5px] font-bold uppercase tracking-wider text-[#475569] mb-0.5">
               Inicio Hasta
             </label>
-            <div className="relative">
-              <input
-                type="date"
-                value={filters.fechaHasta}
-                onChange={(e) => updateField('fechaHasta', e.target.value)}
-                className="w-full h-9 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
-              />
-            </div>
+            <input
+              type="date"
+              value={filters.fechaHasta}
+              onChange={(e) => updateField('fechaHasta', e.target.value)}
+              className="w-full h-8 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all"
+            />
           </div>
         </div>
 
         {/* Estado QA2 */}
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-[#475569] mb-1">
             Estado QA2
           </label>
           <select
             value={filters.qa}
             onChange={(e) => updateField('qa', e.target.value)}
-            className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-xs focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
+            className="w-full h-8 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all"
           >
-            <option value="">Todos los estados QA2</option>
+            <option value="">Todos</option>
             <option value="CON INCIDENCIA">Con incidencia</option>
             <option value="SIN INCIDENCIA">Sin incidencia</option>
             <option value="SIN REGISTRO">QA2 pendiente</option>
           </select>
         </div>
 
-        {/* Estado de Incidencia */}
+        {/* Estado Incidencia */}
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-[#475569] mb-1">
             Estado Incidencia
           </label>
           <select
             value={filters.estadoIncidencia}
             onChange={(e) => updateField('estadoIncidencia', e.target.value)}
-            className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-xs focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
+            className="w-full h-8 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all"
           >
-            <option value="">Todos los estados</option>
+            <option value="">Todos</option>
             {estadosInc.map((ei) => (
               <option key={ei} value={ei}>
                 {ei}
@@ -209,15 +220,15 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
         {/* Tipo de QA */}
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-[#475569] mb-1">
             Tipo de QA
           </label>
           <select
             value={filters.tipoQa}
             onChange={(e) => updateField('tipoQa', e.target.value)}
-            className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-xs focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
+            className="w-full h-8 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all truncate"
           >
-            <option value="">Todos los tipos</option>
+            <option value="">Todos</option>
             {tiposQa.map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -228,15 +239,15 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
         {/* Categoría */}
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
-            Categoría Incidencia
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-[#475569] mb-1">
+            Categoría
           </label>
           <select
             value={filters.categoria}
             onChange={(e) => updateField('categoria', e.target.value)}
-            className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-xs focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
+            className="w-full h-8 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all truncate"
           >
-            <option value="">Todas las categorías</option>
+            <option value="">Todas</option>
             {categorias.map((cat) => (
               <option key={cat} value={cat}>
                 {cat}
@@ -247,15 +258,15 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
         {/* Tutor */}
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#475569] mb-1">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-[#475569] mb-1">
             Tutor
           </label>
           <select
             value={filters.tutor}
             onChange={(e) => updateField('tutor', e.target.value)}
-            className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-xs focus:outline-none focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/15 transition-all"
+            className="w-full h-8 px-2 bg-white border border-[#cbd5e1] rounded text-[#0f172a] text-[11px] focus:outline-none focus:border-[#1d4ed8] focus:ring-1 focus:ring-[#1d4ed8]/20 transition-all truncate"
           >
-            <option value="">Todos los tutores</option>
+            <option value="">Todos</option>
             {tutores.map((tut) => (
               <option key={tut} value={tut}>
                 {tut}
@@ -264,16 +275,16 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
           </select>
         </div>
 
-        {/* Boolean toggles */}
-        <div className="pt-2 border-t border-[#e2e8f0] space-y-2">
+        {/* Boolean checkboxes */}
+        <div className="pt-2 border-t border-[#e2e8f0] space-y-1.5">
           <label className="flex items-center gap-2 cursor-pointer select-none text-[#334155]">
             <input
               type="checkbox"
               checked={filters.onlyInc}
               onChange={(e) => updateField('onlyInc', e.target.checked)}
-              className="w-4 h-4 rounded border-[#cbd5e1] text-[#1d4ed8] focus:ring-[#1d4ed8]/20 accent-[#1d4ed8]"
+              className="w-3.5 h-3.5 rounded border-[#cbd5e1] text-[#1d4ed8] focus:ring-[#1d4ed8]/20 accent-[#1d4ed8]"
             />
-            <span className="text-xs">Solo con incidencias</span>
+            <span className="text-[11px]">Solo con incidencias</span>
           </label>
 
           <label className="flex items-center gap-2 cursor-pointer select-none text-[#334155]">
@@ -281,20 +292,20 @@ export const SidebarFilters: React.FC<SidebarFiltersProps> = ({
               type="checkbox"
               checked={filters.onlyPendQa}
               onChange={(e) => updateField('onlyPendQa', e.target.checked)}
-              className="w-4 h-4 rounded border-[#cbd5e1] text-[#1d4ed8] focus:ring-[#1d4ed8]/20 accent-[#1d4ed8]"
+              className="w-3.5 h-3.5 rounded border-[#cbd5e1] text-[#1d4ed8] focus:ring-[#1d4ed8]/20 accent-[#1d4ed8]"
             />
-            <span className="text-xs">Solo pendientes QA2</span>
+            <span className="text-[11px]">Solo pendientes QA2</span>
           </label>
         </div>
 
-        {/* Reset Action */}
+        {/* Action Button */}
         <div className="pt-2">
           <button
             type="button"
             onClick={onClear}
-            className="w-full h-9 flex items-center justify-center gap-2 bg-[#ffffff] hover:bg-[#f8fafc] text-[#1e293b] border border-[#cbd5e1] rounded text-xs font-semibold tracking-wide transition-all shadow-xs btn-executive-active"
+            className="w-full h-8 flex items-center justify-center gap-1.5 bg-white hover:bg-[#f8fafc] text-[#1e293b] border border-[#cbd5e1] rounded text-[11px] font-semibold tracking-wide transition-all shadow-2xs btn-executive-active"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-[#64748b]" />
+            <RotateCcw className="w-3 h-3 text-[#64748b]" />
             <span>Limpiar filtros</span>
           </button>
         </div>

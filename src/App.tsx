@@ -261,6 +261,7 @@ export default function App() {
           tutores={filterOptions.tutores}
           searchInputRef={searchInputRef}
           isOpen={filtersOpen}
+          onCloseMobile={() => setFiltersOpen(false)}
         />
 
         {/* Main Content Viewport */}

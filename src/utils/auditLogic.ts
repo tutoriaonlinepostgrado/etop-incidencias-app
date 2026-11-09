@@ -265,6 +265,10 @@ export function processRawData(rawCursos: RawCourse[], rawIncidencias: RawIncide
   }
 
   return rawCursos
+    .filter((c) => {
+      const cod = upperText(c['codigo curso'] ?? c.codigo_curso ?? c.CODIGO_CURSO ?? '');
+      return cod !== 'UNI118';
+    })
     .map((c) => {
       const id = String(c.id ?? c.ID ?? '').trim();
       const registros = incMap.get(id) || [];

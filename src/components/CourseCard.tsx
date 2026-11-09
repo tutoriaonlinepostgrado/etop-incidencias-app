@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Course, formatDate, buildDeriveUrl, buildSharePointCursoUrl, FORM_QA2 } from '../utils/auditLogic';
+import { Course, Incident, formatDate, buildDeriveUrl, buildSharePointCursoUrl, FORM_QA2 } from '../utils/auditLogic';
+import { formatIncidentsForEmail, copyToClipboard } from '../utils/clipboardHelper';
 import { IncidentTable } from './IncidentTable';
 import {
   ChevronDown,
@@ -8,12 +9,12 @@ import {
   Bookmark,
   CheckCircle2,
   Clock,
-  AlertCircle,
   ExternalLink,
   Copy,
   Check,
   Send,
-  Edit3
+  Edit3,
+  MailCheck
 } from 'lucide-react';
 
 interface CourseCardProps {
@@ -29,7 +30,20 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   onToggle,
   onOpenPowerApp,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copiedState, setCopiedState] = useState<'none' | 'row' | 'nrc'>('none');
+  const [copiedIncidentId, setCopiedIncidentId] = useState<string | null>(null);
+
+  // Set of selected incident IDs within this course (defaults to first incident if present, can be freely deselected or multi-selected)
+  const [selectedIncidentIds, setSelectedIncidentIds] = useState<Set<string>>(() => {
+    if (course.con.length > 0) {
+      const sorted = [...course.con].sort((a, b) =>
+        String(a.idIncidencia || a.id).localeCompare(String(b.idIncidencia || b.id), 'es')
+      );
+      const firstId = sorted[0].idIncidencia || String(sorted[0].id);
+      return new Set([firstId]);
+    }
+    return new Set();
+  });
 
   const cnt = course.con.length;
   const hasSin = course.sin.length > 0;
@@ -41,17 +55,81 @@ export const CourseCard: React.FC<CourseCardProps> = ({
     ? 'border-l-[#059669]'
     : 'border-l-[#d97706]';
 
-  const handleCopy = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggleIncident = (inc: Incident) => {
+    const key = inc.idIncidencia || String(inc.id);
+    setSelectedIncidentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    const allIds = course.con.map((inc) => inc.idIncidencia || String(inc.id));
+    setSelectedIncidentIds(new Set(allIds));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedIncidentIds(new Set());
+  };
+
+  // Get sorted selected incidents
+  const selectedIncidents = [...course.con]
+    .sort((a, b) =>
+      String(a.idIncidencia || a.id).localeCompare(String(b.idIncidencia || b.id), 'es')
+    )
+    .filter((inc) => selectedIncidentIds.has(inc.idIncidencia || String(inc.id)));
+
+  // Copy selected rows or a single specific incident for email
+  const handleCopyRowsForEmail = async (singleIncident?: Incident, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    const listToCopy = singleIncident ? [singleIncident] : selectedIncidents;
+
+    if (listToCopy.length > 0) {
+      const formatted = formatIncidentsForEmail(course, listToCopy);
+      const ok = await copyToClipboard(formatted);
+      if (ok) {
+        setCopiedState('row');
+        if (singleIncident) {
+          setCopiedIncidentId(singleIncident.idIncidencia || String(singleIncident.id));
+        }
+        setTimeout(() => {
+          setCopiedState('none');
+          setCopiedIncidentId(null);
+        }, 2500);
+      }
+    }
+  };
+
+  // Copy just NRC
+  const handleCopyNrcOnly = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (navigator.clipboard) {
       navigator.clipboard.writeText(course.nrc);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopiedState('nrc');
+      setTimeout(() => setCopiedState('none'), 2000);
     }
   };
 
   const deriveUrl = buildDeriveUrl(course);
   const sharePointUrl = buildSharePointCursoUrl(course.nrc);
+
+  // Label for the main email copy button
+  const getCopyButtonLabel = () => {
+    if (selectedIncidents.length === 0) {
+      return 'Selecciona fila(s) para copiar';
+    }
+    if (selectedIncidents.length === 1) {
+      const idStr = selectedIncidents[0].idIncidencia || selectedIncidents[0].id;
+      return `Copiar fila para correo (#${idStr})`;
+    }
+    return `Copiar ${selectedIncidents.length} filas para correo`;
+  };
 
   return (
     <article
@@ -115,7 +193,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             <span className="mx-1.5 text-[#cbd5e1]">·</span>
             <span>{course.programa}</span>
             <span className="mx-1.5 text-[#cbd5e1]">·</span>
-            <span className="text-[#334155]">Tutor: <span className="font-medium">{course.tutor}</span></span>
+            <span className="text-[#334155]">
+              Tutor: <span className="font-medium">{course.tutor}</span>
+            </span>
           </div>
 
           {/* Meta Tags Row */}
@@ -140,6 +220,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#f8fafc] text-[#475569] border border-[#e2e8f0]">
                 <Bookmark className="w-3 h-3 text-[#64748b]" />
                 <span className="truncate max-w-[150px]">{course.intake}</span>
+              </span>
+            )}
+
+            {course.codigoCurso && (
+              <span className="px-1.5 py-0.5 rounded bg-[#f8fafc] text-[#475569] border border-[#e2e8f0] text-[10px] font-mono">
+                {course.codigoCurso}
               </span>
             )}
 
@@ -239,30 +325,75 @@ export const CourseCard: React.FC<CourseCardProps> = ({
               <span>Gestionar</span>
             </button>
 
-            {/* Copy NRC */}
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-[#f8fafc] text-[#475569] border border-[#cbd5e1] rounded text-xs font-medium transition-colors ml-auto"
-              title="Copiar código NRC al portapapeles"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-[#059669]" />
-                  <span className="text-[#059669]">Copiado</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-[#64748b]" />
-                  <span>Copiar NRC</span>
-                </>
-              )}
-            </button>
+            {/* Action Group: Copiar Fila(s) para Correo / Copiar NRC */}
+            <div className="ml-auto flex items-center gap-1.5">
+              {cnt > 0 ? (
+                <button
+                  type="button"
+                  disabled={selectedIncidents.length === 0 && copiedState !== 'row'}
+                  onClick={(e) => handleCopyRowsForEmail(undefined, e)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-all shadow-2xs ${
+                    copiedState === 'row'
+                      ? 'bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0]'
+                      : selectedIncidents.length === 0
+                      ? 'bg-white text-[#94a3b8] border border-[#cbd5e1] cursor-not-allowed opacity-70'
+                      : 'bg-[#1d4ed8] hover:bg-[#1e40af] text-white'
+                  }`}
+                  title={
+                    selectedIncidents.length > 0
+                      ? `Copiar ${selectedIncidents.length} incidencia(s) seleccionada(s) formateadas para correo`
+                      : 'Marca al menos una fila en la tabla para copiarla'
+                  }
+                >
+                  {copiedState === 'row' ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-[#059669]" />
+                      <span>
+                        ¡{selectedIncidents.length > 1 ? `${selectedIncidents.length} filas copiadas` : 'Fila copiada'} para correo!
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <MailCheck className="w-3.5 h-3.5" />
+                      <span>{getCopyButtonLabel()}</span>
+                    </>
+                  )}
+                </button>
+              ) : null}
+
+              {/* Copiar solo NRC */}
+              <button
+                type="button"
+                onClick={handleCopyNrcOnly}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-[#f8fafc] text-[#475569] border border-[#cbd5e1] rounded text-xs font-medium transition-colors"
+                title="Copiar únicamente el código NRC al portapapeles"
+              >
+                {copiedState === 'nrc' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-[#059669]" />
+                    <span className="text-[#059669]">NRC copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3 text-[#64748b]" />
+                    <span>Copiar NRC</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* High Density Table or Empty State */}
           {cnt > 0 ? (
-            <IncidentTable incidents={course.con} />
+            <IncidentTable
+              incidents={course.con}
+              selectedIncidentIds={selectedIncidentIds}
+              onToggleIncident={handleToggleIncident}
+              onSelectAll={handleSelectAll}
+              onDeselectAll={handleDeselectAll}
+              onCopyIncident={(inc) => handleCopyRowsForEmail(inc)}
+              copiedIncidentId={copiedIncidentId}
+            />
           ) : hasSin ? (
             <div className="p-5 text-center bg-white border-t border-[#e2e8f0]">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ecfdf5] border border-[#a7f3d0] text-[#059669] text-xs font-semibold">
