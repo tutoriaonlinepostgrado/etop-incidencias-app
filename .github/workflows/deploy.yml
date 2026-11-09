@@ -31,6 +31,12 @@ jobs:
         with:
           node-version: '22'
 
+      # Google AI Studio puede volver a exportar esbuild ^0.25.0.
+      # Vite 8 requiere ^0.27.0 o ^0.28.0. Esta corrección se aplica
+      # solamente en el runner y no modifica el código publicado en GitHub.
+      - name: Asegurar compatibilidad esbuild con Vite 8
+        run: npm pkg set 'devDependencies.esbuild=^0.28.0'
+
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
