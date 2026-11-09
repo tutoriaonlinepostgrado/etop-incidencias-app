@@ -1,0 +1,52 @@
+name: Publicar Incidencias ETOP (vista de prueba)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-incidencias-etop"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Descargar código de Google AI Studio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Compilar React para la ruta del repositorio
+        run: npm run build -- --base=/etop-incidencias-app/
+
+      - name: Desactivar transformación Jekyll
+        run: touch dist/.nojekyll
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar archivos publicados
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Publicar versión de prueba
+        id: deployment
+        uses: actions/deploy-pages@v4
