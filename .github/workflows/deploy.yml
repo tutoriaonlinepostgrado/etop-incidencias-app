@@ -1,4 +1,5 @@
 name: Publicar Incidencias ETOP (vista de prueba)
+# Despliegue inicial tras seleccionar GitHub Actions como fuente de Pages.
 
 on:
   push:
