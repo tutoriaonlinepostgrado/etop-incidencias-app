@@ -67,11 +67,6 @@ export default function App() {
 
   const focusedNrc = useMemo(() => new URLSearchParams(window.location.search).get('nrc')?.trim() || '', []);
   const isFocused = useMemo(() => new URLSearchParams(window.location.search).get('vista') === 'curso' && !!focusedNrc, [focusedNrc]);
-  // Embedded mode detection (?embedded=1)
-  const isEmbedded = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).get('embedded') === '1';
-  }, []);
 
   // Fetch data
   const fetchData = async (isManualRefresh = false) => {
@@ -324,8 +319,6 @@ export default function App() {
         onClear={handleClearFilters}
         onRefresh={() => fetchData(true)}
         isRefreshing={refreshing}
-        totalCourses={courses.length}
-        filteredCount={filteredCourses.length}
         lastUpdated={lastUpdated}
         facultades={filterOptions.facultades}
         estadosCurso={filterOptions.estadosCurso}
@@ -334,7 +327,6 @@ export default function App() {
         categorias={filterOptions.categorias}
         tutores={filterOptions.tutores}
         searchInputRef={searchInputRef}
-        isEmbedded={isEmbedded}
       />
 
       {/* El listado se desplaza sin ocupar el ancho de un panel lateral. */}
