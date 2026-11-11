@@ -65,6 +65,8 @@ export default function App() {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  const focusedNrc = useMemo(() => new URLSearchParams(window.location.search).get('nrc')?.trim() || '', []);
+  const isFocused = useMemo(() => new URLSearchParams(window.location.search).get('vista') === 'curso' && !!focusedNrc, [focusedNrc]);
   // Embedded mode detection (?embedded=1)
   const isEmbedded = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -178,8 +180,9 @@ export default function App() {
 
   // Filtered courses
   const filteredCourses = useMemo(() => {
+    if (isFocused) return courses.filter(c => c.nrc.trim().toLowerCase() === focusedNrc.toLowerCase());
     return filterCourses(courses, filters, statMode);
-  }, [courses, filters, statMode]);
+  }, [courses, filters, statMode, isFocused, focusedNrc]);
 
   // KPI Metrics calculation
   const stats = useMemo(() => {
@@ -231,7 +234,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#1e293b] flex flex-col font-sans">
       {/* Topnav (Hidden if embedded) */}
-      {!isEmbedded && (
+      {!isEmbedded && !isFocused && (
         <Navbar
           onToggleFilters={() => setFiltersOpen((prev) => !prev)}
           filtersOpen={filtersOpen}
@@ -249,7 +252,7 @@ export default function App() {
       {/* Main Container Shell */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar Filters */}
-        <SidebarFilters
+        {!isFocused && <SidebarFilters
           filters={filters}
           onChange={setFilters}
           onClear={handleClearFilters}
@@ -262,13 +265,13 @@ export default function App() {
           searchInputRef={searchInputRef}
           isOpen={filtersOpen}
           onCloseMobile={() => setFiltersOpen(false)}
-        />
+        />}
 
         {/* Main Content Viewport */}
         <main className="flex-1 min-w-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           <div className="max-w-7xl mx-auto space-y-4">
             {/* Quick Toggle for Mobile / Tablets */}
-            {!filtersOpen && (
+            {!isFocused && !filtersOpen && (
               <div className="flex items-center justify-between pb-1">
                 <button
                   type="button"
@@ -312,16 +315,16 @@ export default function App() {
             ) : (
               <>
                 {/* KPI Metrics Summary Row */}
-                <KpiMetricsRow
+                {!isFocused && <KpiMetricsRow
                   stats={stats}
                   statMode={statMode}
                   onSelectStat={handleStatToggle}
                   isCollapsed={kpiCollapsed}
                   onToggleCollapse={() => setKpiCollapsed((prev) => !prev)}
-                />
+                />}
 
                 {/* Pagination Controls and Card List Header */}
-                <PaginationControls
+                {!isFocused && <PaginationControls
                   currentPage={currentPage}
                   pageSize={pageSize}
                   totalItems={filteredCourses.length}
@@ -333,16 +336,16 @@ export default function App() {
                   onExpandAll={handleExpandAllVisible}
                   onCollapseAll={handleCollapseAllVisible}
                   isPreparacionFilter={filters.estadoCurso === 'PREPARACION'}
-                />
+                />}
 
                 {/* Course Card Accordion List */}
                 <div className="space-y-2.5">
-                  {paginatedCourses.length > 0 ? (
-                    paginatedCourses.map((course) => (
+                  {filteredCourses.length > 0 ? (
+                    (isFocused ? filteredCourses : paginatedCourses).map((course) => (
                       <CourseCard
                         key={course.id || course.nrc}
                         course={course}
-                        isOpen={openCourseIds.has(course.id)}
+                        isOpen={isFocused || openCourseIds.has(course.id)}
                         onToggle={() => handleToggleCourse(course.id)}
                         onOpenPowerApp={(nrc, courseName) => {
                           setDrawer({
@@ -357,24 +360,24 @@ export default function App() {
                     <div className="p-12 text-center bg-white border border-[#e2e8f0] rounded">
                       <FilterX className="w-8 h-8 text-[#94a3b8] mx-auto mb-2" />
                       <h3 className="text-sm font-semibold text-[#0f172a]">
-                        No se encontraron cursos coincidentes
+                        {isFocused ? 'No se encontraron incidencias para este NRC' : 'No se encontraron cursos coincidentes'}
                       </h3>
                       <p className="text-xs text-[#64748b] mt-1 max-w-sm mx-auto">
                         Intenta ajustar los términos de búsqueda o limpiar los filtros seleccionados.
                       </p>
-                      <button
+                      {!isFocused && <button
                         type="button"
                         onClick={handleClearFilters}
                         className="mt-3 px-3 py-1.5 bg-[#1d4ed8] text-white text-xs font-medium rounded hover:bg-[#1e40af] transition-colors"
                       >
                         Limpiar todos los filtros
-                      </button>
+                      </button>}
                     </div>
                   )}
                 </div>
 
                 {/* Bottom Pagination when there are courses */}
-                {paginatedCourses.length > 0 && (
+                {!isFocused && paginatedCourses.length > 0 && (
                   <div className="pt-2">
                     <PaginationControls
                       currentPage={currentPage}
