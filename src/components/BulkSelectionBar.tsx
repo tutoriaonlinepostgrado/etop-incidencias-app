@@ -122,7 +122,7 @@ export const BulkSelectionBar: React.FC<BulkSelectionBarProps> = ({
       {/* Sticky Compact Bulk Actions Bar */}
       <section
         aria-label="Acciones masivas de incidencias seleccionadas"
-        className="sticky top-[76px] 2xl:top-[46px] z-30 mb-3 rounded-md bg-[#eff6ff] border border-[#93c5fd] shadow-xs px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-xs"
+        className="sticky top-0 z-30 mb-3 rounded-md bg-[#eff6ff] border border-[#93c5fd] shadow-xs px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-xs"
       >
         <div className="flex items-center gap-2 flex-wrap">
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#1d4ed8] text-white font-bold text-[11px] tnum">
