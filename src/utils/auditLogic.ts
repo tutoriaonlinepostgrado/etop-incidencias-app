@@ -238,31 +238,59 @@ export function buildSharePointCursoUrl(nrc: string): string {
 
 export function processRawData(rawCursos: RawCourse[], rawIncidencias: RawIncident[]): Course[] {
   const incMap = new Map<string, Incident[]>();
+  const courseSeenSignatures = new Map<string, Set<string>>();
+  const courseSeenIdCounts = new Map<string, Map<string, number>>();
 
-  for (const i of rawIncidencias) {
+  rawIncidencias.forEach((i, idx) => {
     const k = String(i.cursoId ?? '').trim();
-    if (!k) continue;
+    if (!k) return;
 
     const canvasUrl = extractCanvasUrl(i.urlCanvas ?? i.URL_QA2_FI_Url);
+    const rawIdIncidencia = String(i.idIncidencia ?? i.id ?? `${k}-${idx + 1}`).trim();
+    const categoria = String(i.categoria ?? '').trim();
+    const estadoIncidencia = upperText(i.estadoIncidencia);
+    const qaIncidencias = upperText(i.qaIncidencias);
+    const tipoQA = upperText(i.tipoQA);
+    const descripcionIncidencia = String(i.descripcionIncidencia ?? '').trim();
+    const descripcionSolucion = String(i.descripcionSolucion ?? '').trim();
+
+    // Avoid exact duplicate records for the same course
+    if (!courseSeenSignatures.has(k)) courseSeenSignatures.set(k, new Set());
+    const sigSet = courseSeenSignatures.get(k)!;
+    const signature = `${rawIdIncidencia}||${qaIncidencias}||${estadoIncidencia}||${categoria}||${descripcionIncidencia}||${descripcionSolucion}`;
+    if (sigSet.has(signature)) {
+      return;
+    }
+    sigSet.add(signature);
+
+    // Ensure unique idIncidencia within the same course if distinct incidents share an ID
+    if (!courseSeenIdCounts.has(k)) courseSeenIdCounts.set(k, new Map());
+    const idCountMap = courseSeenIdCounts.get(k)!;
+    const prevCount = idCountMap.get(rawIdIncidencia) ?? 0;
+    idCountMap.set(rawIdIncidencia, prevCount + 1);
+    const uniqueIdIncidencia =
+      prevCount === 0 ? rawIdIncidencia : `${rawIdIncidencia}_${prevCount + 1}`;
+    const fallbackId = i.id ?? uniqueIdIncidencia;
+
     const item: Incident = {
-      id: i.id ?? '',
-      idIncidencia: String(i.idIncidencia ?? i.id ?? ''),
+      id: prevCount === 0 ? fallbackId : `${fallbackId}_${prevCount + 1}`,
+      idIncidencia: uniqueIdIncidencia,
       cursoId: k,
-      categoria: String(i.categoria ?? '').trim(),
-      estadoIncidencia: upperText(i.estadoIncidencia),
-      qaIncidencias: upperText(i.qaIncidencias),
-      tipoQA: upperText(i.tipoQA),
+      categoria,
+      estadoIncidencia,
+      qaIncidencias,
+      tipoQA,
       urlEvidencia: i.urlEvidencia ? String(i.urlEvidencia).trim() : null,
       urlCanvas: canvasUrl || null,
       tieneAdjuntos: i.tieneAdjuntos === true || String(i.tieneAdjuntos).toLowerCase() === 'true',
-      descripcionIncidencia: String(i.descripcionIncidencia ?? '').trim(),
-      descripcionSolucion: String(i.descripcionSolucion ?? '').trim(),
+      descripcionIncidencia,
+      descripcionSolucion,
       semanaUnidad: String(i.semanaUnidad ?? i.semana ?? '').trim(),
     };
 
     if (!incMap.has(k)) incMap.set(k, []);
     incMap.get(k)!.push(item);
-  }
+  });
 
   return rawCursos
     .filter((c) => {
@@ -422,3 +450,47 @@ export function calculateKpiStats(filtered: Course[]): KpiStats {
     derivadas: filtered.reduce((acc, x) => acc + x.derivadas.length, 0),
   };
 }
+
+export function getIncidentUniqueKey(
+  course: Pick<Course, 'id' | 'nrc'>,
+  incident: Pick<Incident, 'id' | 'idIncidencia'>
+): string {
+  const courseKey = String(course.id || course.nrc || '').trim();
+  const incKey = String(incident.idIncidencia || incident.id || '').trim();
+  return `${courseKey}::${incKey}`;
+}
+
+export interface SelectedCourseGroup {
+  course: Course;
+  incidents: Incident[];
+}
+
+export function buildSelectedCourseGroups(
+  courses: Course[],
+  selectedKeys: Set<string>
+): SelectedCourseGroup[] {
+  if (selectedKeys.size === 0) return [];
+  const groups: SelectedCourseGroup[] = [];
+  const seenKeys = new Set<string>();
+
+  for (const course of courses) {
+    if (course.con.length === 0) continue;
+    const sortedIncs = [...course.con].sort((a, b) =>
+      String(a.idIncidencia || a.id).localeCompare(String(b.idIncidencia || b.id), 'es')
+    );
+    const matched: Incident[] = [];
+    for (const inc of sortedIncs) {
+      const key = getIncidentUniqueKey(course, inc);
+      if (selectedKeys.has(key) && !seenKeys.has(key)) {
+        seenKeys.add(key);
+        matched.push(inc);
+      }
+    }
+    if (matched.length > 0) {
+      groups.push({ course, incidents: matched });
+    }
+  }
+
+  return groups;
+}
+

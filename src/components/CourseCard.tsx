@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { Course, Incident, formatDate, buildDeriveUrl, buildSharePointCursoUrl, FORM_QA2 } from '../utils/auditLogic';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Course,
+  Incident,
+  formatDate,
+  buildDeriveUrl,
+  buildSharePointCursoUrl,
+  FORM_QA2,
+  getIncidentUniqueKey,
+} from '../utils/auditLogic';
 import { formatIncidentsForEmail, copyToClipboard } from '../utils/clipboardHelper';
 import { IncidentTable } from './IncidentTable';
 import {
@@ -14,7 +22,7 @@ import {
   Check,
   Send,
   Edit3,
-  MailCheck
+  MailCheck,
 } from 'lucide-react';
 
 interface CourseCardProps {
@@ -22,6 +30,10 @@ interface CourseCardProps {
   isOpen: boolean;
   onToggle: () => void;
   onOpenPowerApp: (nrc: string, courseName: string) => void;
+  selectedIncidentKeys: Set<string>;
+  onToggleIncident: (course: Course, incident: Incident) => void;
+  onSelectAllCourseIncidents: (course: Course) => void;
+  onDeselectAllCourseIncidents: (course: Course) => void;
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({
@@ -29,24 +41,42 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   isOpen,
   onToggle,
   onOpenPowerApp,
+  selectedIncidentKeys,
+  onToggleIncident,
+  onSelectAllCourseIncidents,
+  onDeselectAllCourseIncidents,
 }) => {
   const [copiedState, setCopiedState] = useState<'none' | 'row' | 'nrc'>('none');
   const [copiedIncidentId, setCopiedIncidentId] = useState<string | null>(null);
-
-  // Set of selected incident IDs within this course (defaults to first incident if present, can be freely deselected or multi-selected)
-  const [selectedIncidentIds, setSelectedIncidentIds] = useState<Set<string>>(() => {
-    if (course.con.length > 0) {
-      const sorted = [...course.con].sort((a, b) =>
-        String(a.idIncidencia || a.id).localeCompare(String(b.idIncidencia || b.id), 'es')
-      );
-      const firstId = sorted[0].idIncidencia || String(sorted[0].id);
-      return new Set([firstId]);
-    }
-    return new Set();
-  });
+  const courseCheckboxRef = useRef<HTMLInputElement>(null);
 
   const cnt = course.con.length;
   const hasSin = course.sin.length > 0;
+
+  // Sorted incidents of this course
+  const sortedCourseIncidents = [...course.con].sort((a, b) =>
+    String(a.idIncidencia || a.id).localeCompare(String(b.idIncidencia || b.id), 'es')
+  );
+
+  // Selected incidents within this course from global state
+  const selectedIncidents = sortedCourseIncidents.filter((inc) =>
+    selectedIncidentKeys.has(getIncidentUniqueKey(course, inc))
+  );
+
+  const selectedLocalIdSet = new Set(
+    selectedIncidents.map((inc) => inc.idIncidencia || String(inc.id))
+  );
+
+  const allCourseIncidentsSelected =
+    cnt > 0 && selectedIncidents.length === cnt;
+  const someCourseIncidentsSelected =
+    selectedIncidents.length > 0 && selectedIncidents.length < cnt;
+
+  useEffect(() => {
+    if (courseCheckboxRef.current) {
+      courseCheckboxRef.current.indeterminate = someCourseIncidentsSelected;
+    }
+  }, [someCourseIncidentsSelected]);
 
   // Border and accent color
   const accentColor = cnt
@@ -55,40 +85,24 @@ export const CourseCard: React.FC<CourseCardProps> = ({
     ? 'border-l-[#059669]'
     : 'border-l-[#d97706]';
 
-  const handleToggleIncident = (inc: Incident) => {
-    const key = inc.idIncidencia || String(inc.id);
-    setSelectedIncidentIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
+  const handleToggleCourseCheckbox = (e: React.MouseEvent | React.ChangeEvent) => {
+    e.stopPropagation();
+    if (allCourseIncidentsSelected) {
+      onDeselectAllCourseIncidents(course);
+    } else {
+      onSelectAllCourseIncidents(course);
+    }
   };
 
-  const handleSelectAll = () => {
-    const allIds = course.con.map((inc) => inc.idIncidencia || String(inc.id));
-    setSelectedIncidentIds(new Set(allIds));
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedIncidentIds(new Set());
-  };
-
-  // Get sorted selected incidents
-  const selectedIncidents = [...course.con]
-    .sort((a, b) =>
-      String(a.idIncidencia || a.id).localeCompare(String(b.idIncidencia || b.id), 'es')
-    )
-    .filter((inc) => selectedIncidentIds.has(inc.idIncidencia || String(inc.id)));
-
-  // Copy selected rows or a single specific incident for email
+  // Copy selected rows of this course (or all incidents of this course if none selected yet) or a single specific incident
   const handleCopyRowsForEmail = async (singleIncident?: Incident, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
 
-    const listToCopy = singleIncident ? [singleIncident] : selectedIncidents;
+    const listToCopy = singleIncident
+      ? [singleIncident]
+      : selectedIncidents.length > 0
+      ? selectedIncidents
+      : sortedCourseIncidents.slice(0, 1);
 
     if (listToCopy.length > 0) {
       const formatted = formatIncidentsForEmail(course, listToCopy);
@@ -119,31 +133,57 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   const deriveUrl = buildDeriveUrl(course);
   const sharePointUrl = buildSharePointCursoUrl(course.nrc);
 
-  // Label for the main email copy button
+  // Label for the course-level email copy button
   const getCopyButtonLabel = () => {
     if (selectedIncidents.length === 0) {
       return 'Selecciona fila(s) para copiar';
     }
     if (selectedIncidents.length === 1) {
       const idStr = selectedIncidents[0].idIncidencia || selectedIncidents[0].id;
-      return `Copiar fila para correo (#${idStr})`;
+      return `Copiar fila (#${idStr})`;
     }
-    return `Copiar ${selectedIncidents.length} filas para correo`;
+    return `Copiar ${selectedIncidents.length} filas de este NRC`;
   };
 
   return (
     <article
       data-nrc={course.nrc}
       data-id={course.id}
-      className={`bg-white border border-[#e2e8f0] border-l-4 ${accentColor} rounded shadow-2xs transition-all duration-150 overflow-hidden ${
-        isOpen ? 'ring-1 ring-[#cbd5e1]' : 'hover:border-[#cbd5e1]'
+      className={`w-full bg-white border border-[#e2e8f0] border-l-4 ${accentColor} rounded shadow-2xs transition-all duration-150 overflow-hidden ${
+        selectedIncidents.length > 0
+          ? 'ring-1 ring-[#3b82f6] bg-[#eff6ff]/10'
+          : isOpen
+          ? 'ring-1 ring-[#cbd5e1]'
+          : 'hover:border-[#cbd5e1]'
       }`}
     >
       {/* Clickable Header */}
       <div
         onClick={onToggle}
-        className="flex items-start sm:items-center justify-between gap-3 p-3.5 cursor-pointer hover:bg-[#f8fafc] transition-colors select-none"
+        className="flex items-start sm:items-center justify-between gap-3 px-3.5 py-2.5 cursor-pointer hover:bg-[#f8fafc] transition-colors select-none"
       >
+        {/* Checkbox in Course Card Header when the course has incidents */}
+        {cnt > 0 && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="pt-0.5 sm:pt-0 flex items-center"
+          >
+            <input
+              ref={courseCheckboxRef}
+              type="checkbox"
+              checked={allCourseIncidentsSelected}
+              onChange={handleToggleCourseCheckbox}
+              className="w-4 h-4 rounded border-[#cbd5e1] text-[#1d4ed8] focus:ring-[#1d4ed8]/20 accent-[#1d4ed8] cursor-pointer"
+              title={
+                allCourseIncidentsSelected
+                  ? `Quitar las ${cnt} incidencias de ${course.nrc} de la selección`
+                  : `Seleccionar todas las incidencias (${cnt}) de ${course.nrc}`
+              }
+              aria-label={`Seleccionar todas las incidencias del NRC ${course.nrc}`}
+            />
+          </div>
+        )}
+
         <div className="flex-1 min-w-0">
           {/* Top Line: NRC & Badges */}
           <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -169,6 +209,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({
               </span>
             )}
 
+            {/* Selected Incidents Counter Badge on Card */}
+            {selectedIncidents.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-[#1d4ed8] text-white tnum">
+                {selectedIncidents.length}/{cnt} seleccionada{selectedIncidents.length === 1 ? '' : 's'}
+              </span>
+            )}
+
             {/* Breakdown Counter Pills */}
             {course.pendientes.length > 0 && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#fffbeb] text-[#b45309] border border-[#fde68a]">
@@ -188,7 +235,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           </div>
 
           {/* Course, Program, Tutor & Faculty */}
-          <div className="text-xs text-[#475569] leading-snug line-clamp-1 mb-2">
+          <div className="text-xs text-[#475569] leading-snug line-clamp-1 mb-1.5">
             <strong className="text-[#0f172a] font-semibold">{course.curso}</strong>
             <span className="mx-1.5 text-[#cbd5e1]">·</span>
             <span>{course.programa}</span>
@@ -219,7 +266,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             {course.intake && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#f8fafc] text-[#475569] border border-[#e2e8f0]">
                 <Bookmark className="w-3 h-3 text-[#64748b]" />
-                <span className="truncate max-w-[150px]">{course.intake}</span>
+                <span className="truncate max-w-[180px]">{course.intake}</span>
               </span>
             )}
 
@@ -341,7 +388,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
                   }`}
                   title={
                     selectedIncidents.length > 0
-                      ? `Copiar ${selectedIncidents.length} incidencia(s) seleccionada(s) formateadas para correo`
+                      ? `Copiar ${selectedIncidents.length} incidencia(s) seleccionada(s) de este curso`
                       : 'Marca al menos una fila en la tabla para copiarla'
                   }
                 >
@@ -349,7 +396,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
                     <>
                       <Check className="w-3.5 h-3.5 text-[#059669]" />
                       <span>
-                        ¡{selectedIncidents.length > 1 ? `${selectedIncidents.length} filas copiadas` : 'Fila copiada'} para correo!
+                        ¡{selectedIncidents.length > 1 ? `${selectedIncidents.length} filas copiadas` : 'Fila copiada'}!
                       </span>
                     </>
                   ) : (
@@ -387,10 +434,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           {cnt > 0 ? (
             <IncidentTable
               incidents={course.con}
-              selectedIncidentIds={selectedIncidentIds}
-              onToggleIncident={handleToggleIncident}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
+              selectedIncidentIds={selectedLocalIdSet}
+              onToggleIncident={(inc) => onToggleIncident(course, inc)}
+              onSelectAll={() => onSelectAllCourseIncidents(course)}
+              onDeselectAll={() => onDeselectAllCourseIncidents(course)}
               onCopyIncident={(inc) => handleCopyRowsForEmail(inc)}
               copiedIncidentId={copiedIncidentId}
             />

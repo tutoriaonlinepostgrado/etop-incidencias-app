@@ -1,8 +1,161 @@
-import { Course, Incident, formatDate } from './auditLogic';
+import { Course, Incident, SelectedCourseGroup, formatDate } from './auditLogic';
 
 export interface EmailFormattedIncident {
   plainText: string;
   htmlText: string;
+}
+
+export interface ConsolidatedEmailReport {
+  subject: string;
+  body: string;
+  plainText: string;
+  htmlText: string;
+  nrcCount: number;
+  incidentCount: number;
+  outlookUrl: string;
+  isUrlTruncated: boolean;
+}
+
+const OUTLOOK_COMPOSE_BASE = 'https://outlook.office.com/mail/deeplink/compose';
+const SAFE_OUTLOOK_URL_MAX_LENGTH = 1850;
+
+export function buildOutlookComposeUrl(
+  subject: string,
+  body: string
+): { url: string; isUrlTruncated: boolean } {
+  const fullUrl = `${OUTLOOK_COMPOSE_BASE}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  if (fullUrl.length <= SAFE_OUTLOOK_URL_MAX_LENGTH) {
+    return { url: fullUrl, isUrlTruncated: false };
+  }
+  const fallbackNote =
+    'Estimados/as:\n\n[El reporte consolidado completo ha sido copiado automáticamente al portapapeles para evitar recortes por límite de URL. Presione Ctrl+V (o Cmd+V) aquí para pegar todas las incidencias seleccionadas.]';
+  const safeUrl = `${OUTLOOK_COMPOSE_BASE}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(fallbackNote)}`;
+  return { url: safeUrl, isUrlTruncated: true };
+}
+
+export function buildConsolidatedEmailReport(
+  groups: SelectedCourseGroup[]
+): ConsolidatedEmailReport {
+  const nrcCount = groups.length;
+  const incidentCount = groups.reduce((acc, g) => acc + g.incidents.length, 0);
+
+  if (nrcCount === 0 || incidentCount === 0) {
+    return {
+      subject: 'ETOP | Reporte consolidado de incidencias QA2 | 0 NRC',
+      body: '',
+      plainText: '',
+      htmlText: '',
+      nrcCount: 0,
+      incidentCount: 0,
+      outlookUrl: OUTLOOK_COMPOSE_BASE,
+      isUrlTruncated: false,
+    };
+  }
+
+  const subject = `ETOP | Reporte consolidado de incidencias QA2 | ${nrcCount} NRC`;
+
+  const courseBlocksPlain = groups
+    .map(({ course, incidents }) => {
+      const courseHeaderLines = [
+        `NRC: ${course.nrc || '—'} — ${course.curso || '—'}`,
+        `Tutor: ${course.tutor || 'Por asignar'}`,
+      ];
+      if (course.facultad && course.facultad !== '—') {
+        courseHeaderLines.push(`Facultad: ${course.facultad}`);
+      }
+
+      const incBlocks = incidents
+        .map((inc) => {
+          const ident = inc.idIncidencia || String(inc.id || '—');
+          const catLine = inc.semanaUnidad
+            ? `${inc.categoria || '—'} (${inc.semanaUnidad})`
+            : inc.categoria || '—';
+          const lines = [
+            `Incidencia ${ident}`,
+            `Estado: ${inc.estadoIncidencia || '—'}`,
+            `Tipo de QA: ${inc.tipoQA || '—'}`,
+            `Categoría: ${catLine}`,
+            `Descripción: ${inc.descripcionIncidencia || 'Sin descripción'}`,
+            `Solución u observación: ${inc.descripcionSolucion || 'Pendiente / Sin observación registrada'}`,
+          ];
+          return lines.join('\n');
+        })
+        .join('\n\n');
+
+      return `${courseHeaderLines.join('\n')}\n\n${incBlocks}`;
+    })
+    .join('\n\n--------------------------------------------------\n\n');
+
+  const body = [
+    `Estimados/as:`,
+    ``,
+    `Junto con saludar, comparto el siguiente reporte de incidencias QA2 para su revisión y gestión.`,
+    ``,
+    courseBlocksPlain,
+    ``,
+    `Quedamos atentos/as a sus comentarios y confirmación de gestión.`,
+    ``,
+    `Saludos cordiales,`,
+    `Equipo ETOP · Gestión Tutorial y Aseguramiento de Calidad`,
+  ].join('\n');
+
+  const plainText = `Asunto: ${subject}\n\n${body}`;
+
+  const courseBlocksHtml = groups
+    .map(({ course, incidents }) => {
+      const incHtml = incidents
+        .map((inc) => {
+          const ident = inc.idIncidencia || String(inc.id || '—');
+          const catLine = inc.semanaUnidad
+            ? `${inc.categoria || '—'} (${inc.semanaUnidad})`
+            : inc.categoria || '—';
+          return `
+          <div style="margin-top: 10px; padding: 10px 12px; background-color: #ffffff; border: 1px solid #e2e8f0; border-left: 3px solid #1d4ed8; border-radius: 4px;">
+            <div style="font-weight: bold; color: #0f172a; margin-bottom: 4px;">Incidencia ${ident}</div>
+            <ul style="margin: 0; padding-left: 18px; color: #334155; font-size: 12.5px; line-height: 1.5;">
+              <li><strong>Estado:</strong> ${inc.estadoIncidencia || '—'}</li>
+              <li><strong>Tipo de QA:</strong> ${inc.tipoQA || '—'}</li>
+              <li><strong>Categoría:</strong> ${catLine}</li>
+              <li><strong>Descripción:</strong> ${inc.descripcionIncidencia || 'Sin descripción'}</li>
+              <li><strong>Solución u observación:</strong> ${inc.descripcionSolucion || 'Pendiente / Sin observación registrada'}</li>
+            </ul>
+          </div>`;
+        })
+        .join('');
+
+      return `
+      <div style="margin-bottom: 16px; padding: 12px 14px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <div style="font-size: 13.5px; font-weight: bold; color: #0f172a;">NRC: ${course.nrc || '—'} — ${course.curso || '—'}</div>
+        <div style="font-size: 12px; color: #475569; margin-top: 2px;">
+          <strong>Tutor:</strong> ${course.tutor || 'Por asignar'}
+          ${course.facultad && course.facultad !== '—' ? ` &nbsp;·&nbsp; <strong>Facultad:</strong> ${course.facultad}` : ''}
+        </div>
+        ${incHtml}
+      </div>`;
+    })
+    .join('');
+
+  const htmlText = `
+<div style="font-family: Segoe UI, Arial, sans-serif; font-size: 13px; color: #1e293b; line-height: 1.5; max-width: 720px;">
+  <p style="margin: 0 0 10px;">Estimados/as:</p>
+  <p style="margin: 0 0 14px;">Junto con saludar, comparto el siguiente reporte de incidencias QA2 para su revisión y gestión.</p>
+  ${courseBlocksHtml}
+  <p style="margin: 14px 0 6px;">Quedamos atentos/as a sus comentarios y confirmación de gestión.</p>
+  <p style="margin: 0; color: #475569;">Saludos cordiales,<br><strong>Equipo ETOP · Gestión Tutorial y Aseguramiento de Calidad</strong></p>
+</div>`.trim();
+
+  const { url: outlookUrl, isUrlTruncated } = buildOutlookComposeUrl(subject, body);
+
+  return {
+    subject,
+    body,
+    plainText,
+    htmlText,
+    nrcCount,
+    incidentCount,
+    outlookUrl,
+    isUrlTruncated,
+  };
 }
 
 export function formatIncidentsForEmail(course: Course, incidents: Incident[]): EmailFormattedIncident {
@@ -168,3 +321,4 @@ export async function copyToClipboard(content: { plainText: string; htmlText?: s
   }
   return false;
 }
+

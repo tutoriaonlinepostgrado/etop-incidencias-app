@@ -226,4 +226,95 @@ test('formatIncidentsForEmail formats multiple selected incidents for email', as
   assert.ok(htmlText.includes('Incidencia 2 de 2'));
 });
 
+test('buildSelectedCourseGroups and buildConsolidatedEmailReport select 3 incidents from one NRC and 2 from another and allow removal', async () => {
+  const { getIncidentUniqueKey, buildSelectedCourseGroups } = await import('./auditLogic');
+  const { buildConsolidatedEmailReport } = await import('./clipboardHelper');
+
+  const rawCursos: RawCourse[] = [
+    {
+      id: 1001,
+      nrc: '1001_NRC_A',
+      'nombre curso': 'Curso Alfa',
+      tutor: 'Ana Pérez',
+      facultad: 'Educación',
+      estado: 'ACTIVO',
+    },
+    {
+      id: 1002,
+      nrc: '1002_NRC_B',
+      'nombre curso': 'Curso Beta',
+      tutor: 'Carlos Soto',
+      facultad: 'Ingeniería',
+      estado: 'ACTIVO',
+    },
+    {
+      id: 1003,
+      nrc: '1003_NRC_C',
+      'nombre curso': 'Curso Gamma',
+      tutor: 'Luis Gómez',
+      facultad: 'Salud',
+      estado: 'ACTIVO',
+    },
+  ];
+
+  const rawIncs: RawIncident[] = [
+    { id: 1, cursoId: 1001, idIncidencia: 'A-01', qaIncidencias: 'CON INCIDENCIA', estadoIncidencia: 'PENDIENTE', tipoQA: 'QA2_INICIAL', categoria: 'EVALUACION', descripcionIncidencia: 'Desc A1', descripcionSolucion: 'Sol A1' },
+    { id: 2, cursoId: 1001, idIncidencia: 'A-02', qaIncidencias: 'CON INCIDENCIA', estadoIncidencia: 'CORREGIDA', tipoQA: 'QA2_INICIAL', categoria: 'SYLLABUS', descripcionIncidencia: 'Desc A2', descripcionSolucion: 'Sol A2' },
+    { id: 3, cursoId: 1001, idIncidencia: 'A-03', qaIncidencias: 'CON INCIDENCIA', estadoIncidencia: 'DERIVADO', tipoQA: 'QA2_FINAL', categoria: 'FECHAS', descripcionIncidencia: 'Desc A3', descripcionSolucion: '' },
+    { id: 4, cursoId: 1001, idIncidencia: 'A-04', qaIncidencias: 'CON INCIDENCIA', estadoIncidencia: 'PENDIENTE', tipoQA: 'QA2_FINAL', categoria: 'OTROS', descripcionIncidencia: 'Desc A4 No Seleccionada', descripcionSolucion: '' },
+    { id: 5, cursoId: 1002, idIncidencia: 'B-01', qaIncidencias: 'CON INCIDENCIA', estadoIncidencia: 'PENDIENTE', tipoQA: 'QA2_INICIAL', categoria: 'LINKS', descripcionIncidencia: 'Desc B1', descripcionSolucion: 'Sol B1' },
+    { id: 6, cursoId: 1002, idIncidencia: 'B-02', qaIncidencias: 'CON INCIDENCIA', estadoIncidencia: 'PENDIENTE', tipoQA: 'QA2_INICIAL', categoria: 'MODULOS', descripcionIncidencia: 'Desc B2', descripcionSolucion: '' },
+    { id: 7, cursoId: 1002, idIncidencia: 'B-03', qaIncidencias: 'CON INCIDENCIA', estadoIncidencia: 'CORREGIDA', tipoQA: 'QA2_INICIAL', categoria: 'FORO', descripcionIncidencia: 'Desc B3 No Seleccionada', descripcionSolucion: '' },
+    { id: 8, cursoId: 1003, idIncidencia: 'C-01', qaIncidencias: 'CON INCIDENCIA', estadoIncidencia: 'PENDIENTE', tipoQA: 'QA2_INICIAL', categoria: 'FORO', descripcionIncidencia: 'Desc C1 No Seleccionada', descripcionSolucion: '' },
+  ];
+
+  const courses = processRawData(rawCursos, rawIncs);
+  const cA = courses.find((c) => c.nrc === '1001_NRC_A')!;
+  const cB = courses.find((c) => c.nrc === '1002_NRC_B')!;
+
+  // Select 3 incidents from NRC_A and 2 from NRC_B
+  const selectedKeys = new Set<string>([
+    getIncidentUniqueKey(cA, cA.con.find((i) => i.idIncidencia === 'A-01')!),
+    getIncidentUniqueKey(cA, cA.con.find((i) => i.idIncidencia === 'A-02')!),
+    getIncidentUniqueKey(cA, cA.con.find((i) => i.idIncidencia === 'A-03')!),
+    getIncidentUniqueKey(cB, cB.con.find((i) => i.idIncidencia === 'B-01')!),
+    getIncidentUniqueKey(cB, cB.con.find((i) => i.idIncidencia === 'B-02')!),
+  ]);
+
+  const groups = buildSelectedCourseGroups(courses, selectedKeys);
+  assert.equal(groups.length, 2);
+  assert.equal(groups[0].incidents.length, 3);
+  assert.equal(groups[1].incidents.length, 2);
+
+  const report = buildConsolidatedEmailReport(groups);
+  assert.equal(report.nrcCount, 2);
+  assert.equal(report.incidentCount, 5);
+  assert.equal(report.subject, 'ETOP | Reporte consolidado de incidencias QA2 | 2 NRC');
+
+  // Verify exclusively those 5 incidents are included
+  assert.ok(report.body.includes('NRC: 1001_NRC_A — Curso Alfa'));
+  assert.ok(report.body.includes('Tutor: Ana Pérez'));
+  assert.ok(report.body.includes('Facultad: Educación'));
+  assert.ok(report.body.includes('Incidencia A-01'));
+  assert.ok(report.body.includes('Incidencia A-02'));
+  assert.ok(report.body.includes('Incidencia A-03'));
+  assert.ok(!report.body.includes('Incidencia A-04'));
+
+  assert.ok(report.body.includes('NRC: 1002_NRC_B — Curso Beta'));
+  assert.ok(report.body.includes('Tutor: Carlos Soto'));
+  assert.ok(report.body.includes('Incidencia B-01'));
+  assert.ok(report.body.includes('Incidencia B-02'));
+  assert.ok(!report.body.includes('Incidencia B-03'));
+  assert.ok(!report.body.includes('1003_NRC_C'));
+
+  // Remove 1 incident from NRC_A
+  selectedKeys.delete(getIncidentUniqueKey(cA, cA.con.find((i) => i.idIncidencia === 'A-02')!));
+  const groupsAfterRemove = buildSelectedCourseGroups(courses, selectedKeys);
+  const reportAfterRemove = buildConsolidatedEmailReport(groupsAfterRemove);
+  assert.equal(reportAfterRemove.nrcCount, 2);
+  assert.equal(reportAfterRemove.incidentCount, 4);
+  assert.ok(!reportAfterRemove.body.includes('Incidencia A-02'));
+});
+
+
 
