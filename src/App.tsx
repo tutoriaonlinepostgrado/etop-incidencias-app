@@ -231,6 +231,51 @@ export default function App() {
     setStatMode((prev) => (prev === mode ? '' : mode));
   };
 
+  if (isFocused) {
+    const course = courses.find(c => c.nrc.trim().toLowerCase() === focusedNrc.toLowerCase());
+    const records = course?.con || [];
+    return (
+      <div className="min-h-screen bg-white text-slate-800 font-sans">
+        <main className="px-3 py-3 space-y-3 max-w-2xl mx-auto">
+          {loading && <p className="text-sm text-slate-500 py-8 text-center">Cargando incidencias del NRC…</p>}
+          {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}<button className="block mt-2 underline" onClick={() => fetchData(true)}>Reintentar</button></div>}
+          {!loading && !error && !course && <p className="text-sm text-slate-600 p-4">No se encontró el NRC {focusedNrc} en el catálogo.</p>}
+          {!loading && !error && course && <>
+            <header className="space-y-1 border-b border-slate-200 pb-3">
+              <div className="text-xs font-semibold text-blue-800 break-all">{course.nrc}</div>
+              <h1 className="text-base font-bold leading-snug">{course.curso}</h1>
+              <div className="text-xs text-slate-500">{course.tutor ? 'Tutor: ' + course.tutor : course.programa}</div>
+              <div className="text-xs font-semibold">{records.length} {records.length === 1 ? 'incidencia registrada' : 'incidencias registradas'}</div>
+            </header>
+            {records.length === 0 ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">No hay incidencias registradas para este curso.</div> :
+              records.map((inc, idx) => (
+                <article key={inc.idIncidencia || String(inc.id) || idx} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <strong className="text-sm">Incidencia {idx + 1}</strong>
+                    <span className="rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">{inc.estadoIncidencia || 'Sin estado'}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 text-xs">
+                    {inc.tipoQA && <span className="rounded bg-blue-50 px-2 py-1 text-blue-800">{inc.tipoQA}</span>}
+                    {inc.categoria && <span className="rounded bg-slate-100 px-2 py-1 text-slate-700">{inc.categoria}</span>}
+                    {inc.semanaUnidad && <span className="rounded bg-slate-100 px-2 py-1">{inc.semanaUnidad}</span>}
+                  </div>
+                  <section className="space-y-1"><h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">Descripción</h2><p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{inc.descripcionIncidencia || 'Sin descripción'}</p></section>
+                  {inc.descripcionSolucion && <section className="space-y-1 border-t border-slate-100 pt-2"><h2 className="text-xs font-bold uppercase tracking-wide text-slate-500">Solución registrada</h2><p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{inc.descripcionSolucion}</p></section>}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {(inc.urlCanvas || course.canvasUrl) && <a className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-3 text-center font-semibold text-blue-800" href={inc.urlCanvas || course.canvasUrl} target="_blank" rel="noopener noreferrer">Abrir Canvas ↗</a>}
+                    {inc.urlEvidencia && <a className="rounded-lg border border-slate-200 px-2 py-3 text-center font-semibold" href={inc.urlEvidencia} target="_blank" rel="noopener noreferrer">Ver evidencia ↗</a>}
+                    <button className="rounded-lg border border-violet-200 bg-violet-50 px-2 py-3 text-center font-semibold text-violet-800" onClick={() => setDrawer({isOpen:true,nrc:course.nrc,courseName:course.curso})}>Gestionar ↗</button>
+                  </div>
+                </article>
+              ))
+            }
+          </>}
+        </main>
+        <ManagementDrawer isOpen={drawer.isOpen} onClose={() => setDrawer(prev => ({...prev,isOpen:false}))} nrc={drawer.nrc} courseName={drawer.courseName} powerAppsBaseUrl={POWER_APPS_URL}/>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#1e293b] flex flex-col font-sans">
       {/* Topnav (Hidden if embedded) */}
