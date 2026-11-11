@@ -82,17 +82,11 @@ export const BulkSelectionBar: React.FC<BulkSelectionBarProps> = ({
   };
 
   const handleOpenOutlookDraft = async () => {
-    // Always copy the full report to clipboard first so zero incidents are ever lost
-    const plain = `Asunto: ${editableSubject}\n\n${editableBody}`;
     const isUnmodified = editableSubject === report.subject && editableBody === report.body;
-    await copyToClipboard({
-      plainText: editableBody,
-      htmlText: isUnmodified ? report.htmlText : undefined,
-    });
-
     const { url, isUrlTruncated } = buildOutlookComposeUrl(editableSubject, editableBody);
 
-    // Open Outlook Web draft via anchor click to avoid window.open restrictions
+    // Abrir el borrador durante el clic del usuario: hacerlo DESPUÉS de esperar
+    // el portapapeles puede provocar que el navegador bloquee la ventana.
     const link = document.createElement('a');
     link.href = url;
     link.target = '_blank';
@@ -101,20 +95,21 @@ export const BulkSelectionBar: React.FC<BulkSelectionBarProps> = ({
     link.click();
     document.body.removeChild(link);
 
+    const copied = await copyToClipboard({
+      plainText: editableBody,
+      htmlText: isUnmodified ? report.htmlText : undefined,
+    });
     if (isUrlTruncated) {
-      setOutlookOpenedNotice(
-        'El reporte supera el límite de caracteres de una URL de Outlook. Se copió automáticamente el reporte completo al portapapeles sin truncar ninguna incidencia: presione Ctrl+V en el cuerpo del correo de Outlook.'
-      );
+      setOutlookOpenedNotice(copied
+        ? 'El reporte es extenso: abre el borrador de Outlook y pega el contenido completo con Ctrl+V. Se respaldó en el portapapeles sin eliminar incidencias.'
+        : 'El borrador de Outlook se abrió con un aviso por longitud. No se pudo copiar el texto automáticamente: utiliza «Copiar reporte» y pégalo en el correo antes de enviarlo.');
     } else {
-      setOutlookOpenedNotice(
-        'Borrador abierto en Outlook Web y respaldado automáticamente en su portapapeles.'
-      );
+      setOutlookOpenedNotice(copied
+        ? 'Borrador solicitado en Outlook Web y contenido copiado al portapapeles.'
+        : 'Se solicitó abrir el borrador en Outlook Web. Para respaldar el texto utiliza «Copiar reporte».');
     }
-    setCopiedInModal(true);
-    setTimeout(() => {
-      setCopiedInModal(false);
-    }, 3000);
-    void plain;
+    setCopiedInModal(copied);
+    if (copied) setTimeout(() => setCopiedInModal(false), 3000);
   };
 
   return (
@@ -122,7 +117,7 @@ export const BulkSelectionBar: React.FC<BulkSelectionBarProps> = ({
       {/* Sticky Compact Bulk Actions Bar */}
       <section
         aria-label="Acciones masivas de incidencias seleccionadas"
-        className="sticky top-[76px] 2xl:top-[46px] z-30 mb-3 rounded-md bg-[#eff6ff] border border-[#93c5fd] shadow-xs px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-xs"
+        className="sticky top-0 z-30 mb-3 rounded-md bg-[#eff6ff] border border-[#93c5fd] shadow-xs px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-xs"
       >
         <div className="flex items-center gap-2 flex-wrap">
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#1d4ed8] text-white font-bold text-[11px] tnum">

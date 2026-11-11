@@ -1,0 +1,37 @@
+name: Verificar Incidencias ETOP
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Alinear esbuild con Vite 8
+        run: npm pkg set 'devDependencies.esbuild=^0.28.0'
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Comprobar TypeScript
+        run: npm run lint
+
+      - name: Comprobar lógica de incidencias
+        run: npx tsx --test src/utils/auditLogic.test.ts
+
+      - name: Comprobar compilación de GitHub Pages
+        run: npm run build -- --base=/etop-incidencias-app/

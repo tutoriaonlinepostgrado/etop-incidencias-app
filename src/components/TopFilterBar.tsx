@@ -5,7 +5,6 @@ import {
   X,
   RotateCcw,
   RefreshCw,
-  ExternalLink,
   AlertCircle,
   Clock,
 } from 'lucide-react';
@@ -17,8 +16,6 @@ interface TopFilterBarProps {
   onClear: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
-  totalCourses: number;
-  filteredCount: number;
   lastUpdated: string;
   facultades: string[];
   estadosCurso: string[];
@@ -27,7 +24,6 @@ interface TopFilterBarProps {
   categorias: string[];
   tutores: string[];
   searchInputRef: React.RefObject<HTMLInputElement | null>;
-  isEmbedded: boolean;
 }
 
 export const TopFilterBar: React.FC<TopFilterBarProps> = ({
@@ -37,8 +33,6 @@ export const TopFilterBar: React.FC<TopFilterBarProps> = ({
   onClear,
   onRefresh,
   isRefreshing,
-  totalCourses,
-  filteredCount,
   lastUpdated,
   facultades,
   estadosCurso,
@@ -47,7 +41,6 @@ export const TopFilterBar: React.FC<TopFilterBarProps> = ({
   categorias,
   tutores,
   searchInputRef,
-  isEmbedded,
 }) => {
   const updateField = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     onChange({ ...filters, [key]: value });
@@ -78,21 +71,10 @@ export const TopFilterBar: React.FC<TopFilterBarProps> = ({
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-xs border-b border-[#cbd5e1] shadow-xs select-none">
       <div className="w-full px-3 py-2 sm:px-4 space-y-1.5">
-        {/* 1 row on 2xl+, strictly 2 rows on lg/xl (notebooks), responsive grid on mobile/tablet */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 2xl:flex 2xl:items-center gap-1.5 items-center">
-          {/* Brand / Title */}
-          <div className="col-span-2 sm:col-span-2 lg:col-span-1 2xl:w-auto 2xl:shrink-0 flex items-center gap-1.5 min-w-0 pr-1">
-            <span className="w-2 h-2 rounded-full bg-[#1d4ed8] shrink-0" />
-            <span className="font-bold text-xs text-[#0f172a] truncate" title="Incidencias ETOP · Consolidado QA2">
-              Incidencias QA2
-            </span>
-            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe] shrink-0 tnum">
-              {filteredCount}/{totalCourses}
-            </span>
-          </div>
-
+        {/* Filtros compactos: máximo dos filas en escritorio y ancho completo */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 2xl:grid-cols-7 gap-1.5 items-center">
           {/* Search Input (NRC, Curso, Programa, Tutor, Código) */}
-          <div className="col-span-2 sm:col-span-2 lg:col-span-2 2xl:w-48 2xl:shrink-0 relative min-w-0">
+          <div className="col-span-2 sm:col-span-2 lg:col-span-2 relative min-w-0">
             <Search className="w-3.5 h-3.5 text-[#64748b] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               ref={searchInputRef}
@@ -245,7 +227,7 @@ export const TopFilterBar: React.FC<TopFilterBarProps> = ({
           </div>
 
           {/* Rango Fechas Inicio (Desde - Hasta) */}
-          <div className="col-span-2 sm:col-span-2 lg:col-span-2 2xl:w-52 2xl:shrink-0 flex items-center gap-1 min-w-0">
+          <div className="col-span-2 sm:col-span-2 lg:col-span-2 flex items-center gap-1 min-w-0">
             <input
               type="date"
               value={filters.fechaDesde}
@@ -333,18 +315,7 @@ export const TopFilterBar: React.FC<TopFilterBarProps> = ({
               <span>{isRefreshing ? 'Actualizando…' : 'Actualizar'}</span>
             </button>
 
-            {!isEmbedded && (
-              <a
-                href="https://tutoriaonlinepostgrado.github.io/sitiowebetop/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden xl:inline-flex h-7 px-2 rounded border border-[#cbd5e1] bg-white hover:bg-[#f8fafc] text-[#475569] hover:text-[#0f172a] text-[10.5px] font-medium items-center gap-1 whitespace-nowrap"
-                title="Abrir Portal ETOP en nueva pestaña"
-              >
-                <span>Portal</span>
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
-            )}
+
           </div>
         </div>
       </div>

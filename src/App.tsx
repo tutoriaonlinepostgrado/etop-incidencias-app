@@ -8,10 +8,13 @@ import {
   calculateKpiStats,
   POWER_APPS_URL,
   RawCourse,
-  RawIncident
+  RawIncident,
+  Incident,
+  buildSelectedCourseGroups,
+  getIncidentUniqueKey
 } from './utils/auditLogic';
-import { Navbar } from './components/Navbar';
-import { SidebarFilters } from './components/SidebarFilters';
+import { TopFilterBar } from './components/TopFilterBar';
+import { BulkSelectionBar } from './components/BulkSelectionBar';
 import { KpiMetricsRow } from './components/KpiMetricsRow';
 import { CourseCard } from './components/CourseCard';
 import { ManagementDrawer } from './components/ManagementDrawer';
@@ -20,9 +23,7 @@ import {
   AlertCircle,
   RefreshCw,
   Search,
-  FilterX,
-  SlidersHorizontal,
-  FileCheck2
+  FilterX
 } from 'lucide-react';
 
 const BASE_URL = 'https://raw.githubusercontent.com/tutoriaonlinepostgrado/sitiowebetop/main/';
@@ -41,16 +42,15 @@ export default function App() {
   // Interactive controls state
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [statMode, setStatMode] = useState<string>('');
-  const [filtersOpen, setFiltersOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth >= 1024;
-    }
-    return true;
-  });
   const [kpiCollapsed, setKpiCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [openCourseIds, setOpenCourseIds] = useState<Set<string>>(new Set());
+  // La selección pertenece a la sesión de la vista completa, no a la página
+  // o los filtros visibles; así se pueden combinar incidencias de muchos NRC.
+  const [selectedIncidentKeys, setSelectedIncidentKeys] = useState<Set<string>>(
+    () => new Set()
+  );
 
   // Management Drawer state
   const [drawer, setDrawer] = useState<{
@@ -67,11 +67,6 @@ export default function App() {
 
   const focusedNrc = useMemo(() => new URLSearchParams(window.location.search).get('nrc')?.trim() || '', []);
   const isFocused = useMemo(() => new URLSearchParams(window.location.search).get('vista') === 'curso' && !!focusedNrc, [focusedNrc]);
-  // Embedded mode detection (?embedded=1)
-  const isEmbedded = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).get('embedded') === '1';
-  }, []);
 
   // Fetch data
   const fetchData = async (isManualRefresh = false) => {
@@ -101,6 +96,15 @@ export default function App() {
       );
 
       setCourses(processed);
+      // Conservar selecciones de registros todavía existentes después de refrescar,
+      // evitando que una incidencia eliminada permanezca en el estado global.
+      setSelectedIncidentKeys((previous) => {
+        if (previous.size === 0) return previous;
+        const valid = new Set(processed.flatMap((course) =>
+          course.con.map((inc) => getIncidentUniqueKey(course, inc))
+        ));
+        return new Set([...previous].filter((key) => valid.has(key)));
+      });
       setLastUpdated(
         new Date().toLocaleDateString('es-CL', {
           day: '2-digit',
@@ -132,17 +136,13 @@ export default function App() {
   useEffect(() => {
     fetchData();
 
-    // Auto-collapse sidebar on smaller screens initially
-    if (window.innerWidth < 1280) {
-      setFiltersOpen(false);
-    }
-
-    // Global keyboard shortcut: press '/' to focus search input
+    // Atajo de búsqueda: no interceptar escritura en campos editables.
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+      const target = e.target as HTMLElement | null;
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey &&
+          !target?.closest('input, textarea, select, [contenteditable="true"]')) {
         e.preventDefault();
-        setFiltersOpen(true);
-        setTimeout(() => searchInputRef.current?.focus(), 150);
+        searchInputRef.current?.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -183,6 +183,13 @@ export default function App() {
     if (isFocused) return courses.filter(c => c.nrc.trim().toLowerCase() === focusedNrc.toLowerCase());
     return filterCourses(courses, filters, statMode);
   }, [courses, filters, statMode, isFocused, focusedNrc]);
+
+  // La selección se calcula sobre TODOS los cursos cargados, nunca sobre
+  // el resultado filtrado o paginado. Mantener los grupos por NRC.
+  const selectedGroups = useMemo(
+    () => buildSelectedCourseGroups(courses, selectedIncidentKeys),
+    [courses, selectedIncidentKeys]
+  );
 
   // KPI Metrics calculation
   const stats = useMemo(() => {
@@ -231,6 +238,32 @@ export default function App() {
     setStatMode((prev) => (prev === mode ? '' : mode));
   };
 
+  const toggleSelectedIncident = (course: Course, inc: Incident) => {
+    const key = getIncidentUniqueKey(course, inc);
+    setSelectedIncidentKeys((previous) => {
+      const next = new Set(previous);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const selectAllCourseIncidents = (course: Course) => {
+    setSelectedIncidentKeys((previous) => {
+      const next = new Set(previous);
+      for (const inc of course.con) next.add(getIncidentUniqueKey(course, inc));
+      return next;
+    });
+  };
+
+  const deselectAllCourseIncidents = (course: Course) => {
+    setSelectedIncidentKeys((previous) => {
+      const next = new Set(previous);
+      for (const inc of course.con) next.delete(getIncidentUniqueKey(course, inc));
+      return next;
+    });
+  };
+
   if (isFocused) {
     const course = courses.find(c => c.nrc.trim().toLowerCase() === focusedNrc.toLowerCase());
     const records = course?.con || [];
@@ -277,58 +310,29 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#1e293b] flex flex-col font-sans">
-      {/* Topnav (Hidden if embedded) */}
-      {!isEmbedded && !isFocused && (
-        <Navbar
-          onToggleFilters={() => setFiltersOpen((prev) => !prev)}
-          filtersOpen={filtersOpen}
-          onFocusSearch={() => {
-            setFiltersOpen(true);
-            setTimeout(() => searchInputRef.current?.focus(), 150);
-          }}
-          onRefresh={() => fetchData(true)}
-          isRefreshing={refreshing}
-          totalCourses={courses.length}
-          lastUpdated={lastUpdated}
-        />
-      )}
+    <div className="h-screen min-h-0 bg-[#f8fafc] text-[#1e293b] flex flex-col font-sans">
+      {/* Los filtros reemplazan al encabezado original y ocupan todo el ancho. */}
+      <TopFilterBar
+        filters={filters}
+        statMode={statMode}
+        onChange={setFilters}
+        onClear={handleClearFilters}
+        onRefresh={() => fetchData(true)}
+        isRefreshing={refreshing}
+        lastUpdated={lastUpdated}
+        facultades={filterOptions.facultades}
+        estadosCurso={filterOptions.estadosCurso}
+        estadosInc={filterOptions.estadosInc}
+        tiposQa={filterOptions.tiposQa}
+        categorias={filterOptions.categorias}
+        tutores={filterOptions.tutores}
+        searchInputRef={searchInputRef}
+      />
 
-      {/* Main Container Shell */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar Filters */}
-        {!isFocused && <SidebarFilters
-          filters={filters}
-          onChange={setFilters}
-          onClear={handleClearFilters}
-          facultades={filterOptions.facultades}
-          estadosCurso={filterOptions.estadosCurso}
-          estadosInc={filterOptions.estadosInc}
-          tiposQa={filterOptions.tiposQa}
-          categorias={filterOptions.categorias}
-          tutores={filterOptions.tutores}
-          searchInputRef={searchInputRef}
-          isOpen={filtersOpen}
-          onCloseMobile={() => setFiltersOpen(false)}
-        />}
-
-        {/* Main Content Viewport */}
-        <main className="flex-1 min-w-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
-          <div className="max-w-7xl mx-auto space-y-4">
-            {/* Quick Toggle for Mobile / Tablets */}
-            {!isFocused && !filtersOpen && (
-              <div className="flex items-center justify-between pb-1">
-                <button
-                  type="button"
-                  onClick={() => setFiltersOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white text-[#1d4ed8] border border-[#cbd5e1] hover:border-[#93c5fd] rounded shadow-2xs transition-colors"
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>Mostrar panel de filtros</span>
-                </button>
-              </div>
-            )}
-
+      {/* El listado se desplaza sin ocupar el ancho de un panel lateral. */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        <main className="flex-1 min-w-0 overflow-y-auto px-3 py-3 sm:px-5 sm:py-4" id="etop-incidencias-list">
+          <div className="w-full mx-auto space-y-4">
             {/* Error Banner */}
             {error && (
               <div className="p-4 rounded border border-[#fecaca] bg-[#fef2f2] text-[#991b1b] text-xs flex items-center justify-between">
@@ -368,6 +372,14 @@ export default function App() {
                   onToggleCollapse={() => setKpiCollapsed((prev) => !prev)}
                 />}
 
+                {/* Selección global: persiste entre páginas y cambios de filtros. */}
+                <BulkSelectionBar
+                  selectedGroups={selectedGroups}
+                  onRemoveIncident={toggleSelectedIncident}
+                  onRemoveCourseIncidents={deselectAllCourseIncidents}
+                  onClearSelection={() => setSelectedIncidentKeys(new Set())}
+                />
+
                 {/* Pagination Controls and Card List Header */}
                 {!isFocused && <PaginationControls
                   currentPage={currentPage}
@@ -399,6 +411,10 @@ export default function App() {
                             courseName,
                           });
                         }}
+                        selectedIncidentKeys={selectedIncidentKeys}
+                        onToggleIncident={toggleSelectedIncident}
+                        onSelectAllCourseIncidents={selectAllCourseIncidents}
+                        onDeselectAllCourseIncidents={deselectAllCourseIncidents}
                       />
                     ))
                   ) : (
@@ -444,17 +460,6 @@ export default function App() {
           </div>
         </main>
       </div>
-
-      {/* Footer */}
-      {!isEmbedded && (
-        <footer className="bg-white border-t border-[#e2e8f0] py-3 px-4 text-center text-xs text-[#64748b] select-none">
-          <p>
-            Portal ETOP · Gobernanza Académica & Control de Calidad · Datos sincrónicos desde{' '}
-            <span className="font-mono text-[#0f172a] font-medium">nrcs.json</span> e{' '}
-            <span className="font-mono text-[#0f172a] font-medium">incidencias.json</span>
-          </p>
-        </footer>
-      )}
 
       {/* Slide-over Power Apps Drawer */}
       <ManagementDrawer
